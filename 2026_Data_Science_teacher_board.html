@@ -1,0 +1,1398 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#15212e">
+  <link rel="icon" href="data:,">
+  <title>2026 데이터 과학 수업 전자칠판</title>
+  <style>
+    :root {
+      --ink: #15212e;
+      --ink-2: #2c3a47;
+      --paper: #fffdf7;
+      --white: #ffffff;
+      --mist: #eef3f4;
+      --line: #cbd5d8;
+      --cyan: #00a7c4;
+      --blue: #3155c6;
+      --yellow: #ffd447;
+      --coral: #ef6253;
+      --green: #238b57;
+      --code: #111a24;
+      --shadow: 0 8px 0 rgba(21, 33, 46, .12);
+      --radius: 8px;
+      --base-size: 16px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--ink);
+      background-color: var(--mist);
+      background-image:
+        linear-gradient(rgba(21, 33, 46, .045) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(21, 33, 46, .045) 1px, transparent 1px);
+      background-size: 24px 24px;
+      font-family: "NanumSquareRound", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+      font-size: var(--base-size);
+      letter-spacing: 0;
+      word-break: keep-all;
+      overflow-wrap: break-word;
+    }
+    pre, code { word-break: normal; overflow-wrap: normal; }
+    button, input, select { font: inherit; letter-spacing: 0; }
+    button { cursor: pointer; }
+    button:focus-visible, select:focus-visible, input:focus-visible {
+      outline: 4px solid rgba(0, 167, 196, .3);
+      outline-offset: 2px;
+    }
+    .skip-link {
+      position: fixed;
+      z-index: 100;
+      top: 8px;
+      left: 8px;
+      transform: translateY(-140%);
+      padding: 10px 14px;
+      color: var(--white);
+      background: var(--ink);
+    }
+    .skip-link:focus { transform: translateY(0); }
+    .app { min-height: 100vh; padding-bottom: calc(78px + env(safe-area-inset-bottom)); }
+    .topbar {
+      position: sticky;
+      z-index: 30;
+      top: 0;
+      display: grid;
+      grid-template-columns: minmax(250px, 1fr) auto auto;
+      align-items: center;
+      gap: 14px;
+      min-height: 76px;
+      padding: 10px clamp(14px, 3vw, 34px);
+      color: var(--white);
+      background: var(--ink);
+      border-bottom: 5px solid var(--yellow);
+    }
+    .brand { min-width: 0; }
+    .brand-kicker {
+      display: block;
+      margin-bottom: 2px;
+      color: var(--yellow);
+      font-size: .76rem;
+      font-weight: 800;
+    }
+    .brand h1 {
+      margin: 0;
+      overflow: hidden;
+      font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+      line-height: 1.15;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mode-switch {
+      display: inline-grid;
+      grid-template-columns: repeat(3, 1fr);
+      border: 2px solid rgba(255,255,255,.32);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .mode-switch button {
+      min-height: 38px;
+      padding: 6px 12px;
+      color: var(--white);
+      background: transparent;
+      border: 0;
+      border-right: 1px solid rgba(255,255,255,.26);
+      font-weight: 800;
+    }
+    .mode-switch button:last-child { border-right: 0; }
+    .mode-switch button.active { color: var(--ink); background: var(--yellow); }
+    .top-actions { display: flex; align-items: center; gap: 6px; }
+    .icon-btn {
+      display: inline-grid;
+      place-items: center;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      color: var(--white);
+      background: transparent;
+      border: 1px solid rgba(255,255,255,.38);
+      border-radius: var(--radius);
+      font-weight: 900;
+    }
+    .icon-btn:hover { background: rgba(255,255,255,.12); }
+    .progress-track {
+      grid-column: 1 / -1;
+      height: 5px;
+      margin: 0 -4px -4px;
+      overflow: hidden;
+      background: rgba(255,255,255,.18);
+    }
+    .progress-fill {
+      width: 8%;
+      height: 100%;
+      background: var(--cyan);
+      transition: width .45s ease;
+    }
+    .layout {
+      display: grid;
+      grid-template-columns: 270px minmax(0, 1fr);
+      align-items: start;
+      gap: 18px;
+      width: min(1760px, 100%);
+      margin: 0 auto;
+      padding: 18px clamp(12px, 2.4vw, 30px) 34px;
+    }
+    .sidebar {
+      position: sticky;
+      top: 94px;
+      max-height: calc(100vh - 116px);
+      overflow: auto;
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .story-card {
+      padding: 16px;
+      background: var(--yellow);
+      border-bottom: 2px solid var(--ink);
+    }
+    .story-card strong { display: block; margin-bottom: 7px; font-size: 1.05rem; }
+    .story-card p { margin: 0; font-size: .88rem; line-height: 1.55; }
+    .lesson-nav { display: grid; padding: 8px; }
+    .lesson-btn {
+      display: grid;
+      grid-template-columns: 34px minmax(0, 1fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 6px 8px;
+      color: var(--ink);
+      background: transparent;
+      border: 0;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+    }
+    .lesson-btn:last-child { border-bottom: 0; }
+    .lesson-btn:hover { background: var(--mist); }
+    .lesson-btn.active { background: var(--ink); color: var(--white); }
+    .lesson-number {
+      display: grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      color: var(--ink);
+      background: var(--yellow);
+      border: 2px solid currentColor;
+      border-radius: 50%;
+      font-size: .78rem;
+      font-weight: 900;
+    }
+    .lesson-btn.active .lesson-number { color: var(--ink); }
+    .lesson-name { min-width: 0; font-size: .88rem; font-weight: 800; line-height: 1.25; }
+    .content { min-width: 0; }
+    .stage-head {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 16px;
+      padding: clamp(20px, 3vw, 34px);
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      border-radius: var(--radius) var(--radius) 0 0;
+      overflow: hidden;
+    }
+    .stage-head::after {
+      content: "";
+      position: absolute;
+      right: -28px;
+      bottom: -28px;
+      width: 130px;
+      height: 70px;
+      background: var(--cyan);
+      border: 2px solid var(--ink);
+      transform: rotate(-12deg);
+    }
+    .eyebrow {
+      display: inline-block;
+      margin-bottom: 9px;
+      color: var(--blue);
+      font-size: .8rem;
+      font-weight: 900;
+    }
+    .stage-head h2 {
+      max-width: 900px;
+      margin: 0 0 10px;
+      font-size: clamp(1.55rem, 3vw, 2.65rem);
+      line-height: 1.12;
+    }
+    .stage-head p { max-width: 880px; margin: 0; color: var(--ink-2); line-height: 1.65; }
+    .stage-head.practice-stage {
+      color: var(--ink);
+      background: #e8f7fa;
+      border-color: var(--blue);
+    }
+    .stage-head.practice-stage::after { background: var(--yellow); border-color: var(--blue); }
+    .practice-stage .eyebrow { color: var(--coral); }
+    .practice-stage .stage-badge { background: var(--blue); transform: rotate(-2deg); }
+    .stage-badge {
+      position: relative;
+      z-index: 1;
+      align-self: start;
+      min-width: 112px;
+      padding: 10px 12px;
+      color: var(--white);
+      background: var(--coral);
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      text-align: center;
+      font-weight: 900;
+      transform: rotate(2deg);
+    }
+    .practice-brief {
+      display: grid;
+      grid-template-columns: auto repeat(4, minmax(0, 1fr));
+      align-items: center;
+      gap: 10px;
+      padding: 12px clamp(18px, 3vw, 34px);
+      color: var(--white);
+      background: var(--ink);
+      border-right: 2px solid var(--blue);
+      border-left: 2px solid var(--blue);
+    }
+    .practice-brief > strong { color: var(--yellow); font-size: .9rem; }
+    .practice-step { display: flex; align-items: center; gap: 7px; min-width: 0; font-size: .82rem; font-weight: 800; }
+    .practice-step b {
+      display: inline-grid;
+      flex: 0 0 26px;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      color: var(--ink);
+      background: var(--yellow);
+      border-radius: 50%;
+    }
+    .lesson-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.18fr) minmax(310px, .82fr);
+      gap: 0;
+      background: var(--white);
+      border: 2px solid var(--ink);
+      border-top: 0;
+      border-radius: 0 0 var(--radius) var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .practice-mode .lesson-grid { border-color: var(--blue); }
+    .practice-layout .simulator-band { background: #f2fbfd; }
+    .practice-layout .quiz-band { background: #fffbed; }
+    .main-column { min-width: 0; border-right: 2px solid var(--ink); }
+    .side-column { min-width: 0; background: #f8faf9; }
+    .band { padding: clamp(18px, 2.4vw, 28px); border-bottom: 2px solid var(--ink); }
+    .band:last-child { border-bottom: 0; }
+    .band-title {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin: 0 0 14px;
+      font-size: 1.06rem;
+    }
+    .band-index {
+      display: inline-grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      background: var(--yellow);
+      border: 2px solid var(--ink);
+      border-radius: 50%;
+      font-size: .78rem;
+    }
+    .concept-text { line-height: 1.7; }
+    .concept-text p { margin: 0 0 11px; }
+    .concept-text ul { margin: 8px 0 0; padding-left: 21px; }
+    .concept-text li { margin: 5px 0; }
+    .key-list { display: grid; gap: 8px; margin-top: 14px; }
+    .key-item {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 9px;
+      align-items: start;
+      padding: 10px 12px;
+      background: var(--mist);
+      border-left: 5px solid var(--cyan);
+    }
+    .key-item code { color: var(--blue); font-weight: 900; }
+    .life-example {
+      margin-top: 14px;
+      padding: 13px 14px;
+      background: #fff8d7;
+      border-left: 6px solid var(--yellow);
+      line-height: 1.68;
+    }
+    .life-example strong { display: block; margin-bottom: 4px; }
+    .code-shell { overflow: hidden; background: var(--code); border: 2px solid var(--ink); border-radius: var(--radius); }
+    .code-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      min-height: 42px;
+      padding: 7px 9px 7px 13px;
+      color: #c7d2de;
+      background: #23303d;
+      border-bottom: 1px solid #42505f;
+      font-size: .78rem;
+    }
+    .code-toolbar strong { color: var(--yellow); }
+    .copy-btn {
+      min-height: 30px;
+      padding: 4px 9px;
+      color: var(--white);
+      background: transparent;
+      border: 1px solid #687788;
+      border-radius: 6px;
+    }
+    pre {
+      max-height: 430px;
+      margin: 0;
+      overflow: auto;
+      padding: 18px;
+      color: #e7edf3;
+      font-family: Menlo, Monaco, "NanumGothicCoding", monospace;
+      font-size: .86rem;
+      line-height: 1.65;
+      white-space: pre;
+      tab-size: 4;
+    }
+    .simulator { min-height: 280px; }
+    .sim-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: end;
+      gap: 10px;
+      padding: 14px;
+      background: #e8f7fa;
+      border: 2px solid var(--ink);
+      border-bottom: 0;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .control { display: grid; gap: 4px; min-width: 120px; }
+    .sim-toolbar > .control { flex: 1 1 150px; min-width: 0; }
+    .sim-toolbar > .control select { width: 100%; }
+    .control label, .control .label { font-size: .75rem; font-weight: 900; }
+    select, input[type="number"] {
+      min-height: 38px;
+      max-width: 100%;
+      padding: 7px 9px;
+      color: var(--ink);
+      background: var(--white);
+      border: 2px solid var(--ink);
+      border-radius: 6px;
+    }
+    input[type="range"] { width: 150px; accent-color: var(--blue); }
+    .run-btn, .primary-btn, .secondary-btn {
+      min-height: 40px;
+      padding: 8px 14px;
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      font-weight: 900;
+      text-align: center;
+    }
+    .run-btn, .primary-btn { color: var(--white); background: var(--blue); box-shadow: 0 4px 0 var(--ink); }
+    .run-btn:active, .primary-btn:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+    .secondary-btn { color: var(--ink); background: var(--white); }
+    .sim-output {
+      min-height: 210px;
+      overflow: auto;
+      padding: 16px;
+      background: var(--white);
+      border: 2px solid var(--ink);
+      border-radius: 0 0 var(--radius) var(--radius);
+    }
+    .empty-state {
+      display: grid;
+      place-items: center;
+      min-height: 174px;
+      color: #64727f;
+      text-align: center;
+      line-height: 1.55;
+    }
+    .output-title { margin: 0 0 12px; font-size: 1rem; }
+    .data-table-wrap { max-width: 100%; overflow: auto; border: 1px solid var(--line); }
+    table { width: 100%; border-collapse: collapse; font-size: .86rem; }
+    th, td { padding: 9px 10px; border-right: 1px solid var(--line); border-bottom: 1px solid var(--line); text-align: center; white-space: nowrap; }
+    th { color: var(--white); background: var(--ink); }
+    tr:last-child td { border-bottom: 0; }
+    th:last-child, td:last-child { border-right: 0; }
+    tr.highlight td { background: #fff4b8; font-weight: 900; }
+    .nan { color: var(--coral); font-weight: 900; }
+    .metric-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 14px; }
+    .metric { padding: 12px; background: var(--mist); border: 2px solid var(--ink); border-radius: var(--radius); }
+    .metric span { display: block; margin-bottom: 4px; color: #566471; font-size: .74rem; font-weight: 800; }
+    .metric strong { font-size: 1.5rem; }
+    .array-grid { display: grid; gap: 5px; max-width: 620px; }
+    .array-cell { display: grid; place-items: center; min-height: 48px; background: var(--yellow); border: 2px solid var(--ink); font-weight: 900; animation: pop .28s both; }
+    .score-inputs { display: grid; grid-template-columns: 70px repeat(3, minmax(64px, 1fr)); gap: 6px; align-items: center; }
+    .score-inputs strong { font-size: .8rem; }
+    .score-inputs input { width: 100%; }
+    .chart-wrap { min-height: 320px; }
+    canvas { display: block; width: 100%; height: 310px; background: var(--white); }
+    .caption { margin: 10px 0 0; color: #566471; font-size: .82rem; line-height: 1.55; }
+    .teacher-tip { padding: 14px; background: #e8f7ef; border-left: 6px solid var(--green); line-height: 1.6; }
+    .teacher-tip strong { display: block; margin-bottom: 5px; }
+    .practice-mode .teacher-only { display: none; }
+    .quiz-card { padding: 0; }
+    .difficulty {
+      display: inline-block;
+      margin-bottom: 10px;
+      padding: 4px 8px;
+      color: var(--ink);
+      background: var(--yellow);
+      border: 1px solid var(--ink);
+      border-radius: 5px;
+      font-size: .74rem;
+      font-weight: 900;
+    }
+    .difficulty.medium { color: var(--white); background: var(--cyan); }
+    .difficulty.hard { color: var(--white); background: var(--coral); }
+    .quiz-question { margin: 0 0 14px; font-size: 1rem; line-height: 1.6; }
+    .choices { display: grid; gap: 8px; }
+    .choice {
+      display: grid;
+      grid-template-columns: 24px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      min-height: 44px;
+      padding: 10px;
+      background: var(--white);
+      border: 2px solid var(--line);
+      border-radius: var(--radius);
+      cursor: pointer;
+      line-height: 1.45;
+    }
+    .choice:hover { border-color: var(--cyan); }
+    .choice:has(input:checked) { border-color: var(--blue); background: #edf1ff; }
+    .choice input { margin-top: 3px; accent-color: var(--blue); }
+    .quiz-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 13px; }
+    .feedback { margin-top: 14px; padding: 14px; border: 2px solid var(--ink); border-radius: var(--radius); line-height: 1.62; animation: rise .3s ease both; }
+    .feedback.correct { background: #e8f7ef; border-left: 8px solid var(--green); }
+    .feedback.wrong { background: #fff0ed; border-left: 8px solid var(--coral); }
+    .feedback h4 { margin: 0 0 8px; }
+    .daily-example {
+      margin: 12px 0;
+      padding: 12px 13px;
+      background: #eef7ff;
+      border-left: 6px solid var(--blue);
+      line-height: 1.68;
+    }
+    .daily-example strong { display: block; margin-bottom: 4px; color: var(--blue); }
+    .solution-steps { margin: 9px 0; padding-left: 21px; }
+    .choice-review { display: grid; gap: 6px; margin-top: 12px; }
+    .review-row { padding: 9px; background: rgba(255,255,255,.72); border-left: 4px solid var(--line); font-size: .86rem; }
+    .review-row.answer { border-left-color: var(--green); }
+    .assessment-shell {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 270px;
+      gap: 18px;
+      padding: clamp(18px, 3vw, 34px);
+      background: var(--paper);
+      border: 2px solid var(--ink);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .assessment-main { min-width: 0; }
+    .assessment-main h2 { margin: 0 0 8px; font-size: clamp(1.55rem, 3vw, 2.45rem); }
+    .assessment-sub { margin: 0 0 22px; color: #566471; line-height: 1.6; }
+    .assessment-panel { padding: 20px; background: var(--white); border: 2px solid var(--ink); border-radius: var(--radius); }
+    .assessment-side { align-self: start; padding: 18px; color: var(--white); background: var(--ink); border-radius: var(--radius); }
+    .score-big { display: block; margin: 8px 0 2px; color: var(--yellow); font-size: 2.6rem; font-weight: 900; }
+    .question-map { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 18px 0; }
+    .question-dot { min-height: 36px; padding: 4px; color: var(--white); background: transparent; border: 1px solid #72808d; border-radius: 5px; }
+    .question-dot.active { color: var(--ink); background: var(--yellow); border-color: var(--yellow); }
+    .question-dot.done { background: var(--green); border-color: var(--green); }
+    .assessment-side .secondary-btn { width: 100%; margin-top: 8px; }
+    .summary-box { padding: 20px; background: #e8f7ef; border: 2px solid var(--ink); border-radius: var(--radius); line-height: 1.65; }
+    .bottom-nav {
+      position: fixed;
+      z-index: 25;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: grid;
+      grid-template-columns: 1fr minmax(180px, 420px) 1fr;
+      align-items: center;
+      gap: 10px;
+      min-height: 66px;
+      padding: 9px clamp(12px, 3vw, 34px) calc(9px + env(safe-area-inset-bottom));
+      color: var(--white);
+      background: rgba(21, 33, 46, .97);
+      border-top: 4px solid var(--cyan);
+    }
+    .bottom-nav button { min-height: 42px; padding: 8px 14px; color: var(--white); background: transparent; border: 1px solid #71808d; border-radius: var(--radius); font-weight: 900; }
+    .bottom-nav button:hover:not(:disabled) { background: rgba(255,255,255,.11); }
+    .bottom-nav button:disabled { opacity: .35; cursor: not-allowed; }
+    .next-btn { justify-self: end; }
+    .step-status { text-align: center; font-size: .82rem; font-weight: 800; }
+    .toast {
+      position: fixed;
+      z-index: 80;
+      right: 18px;
+      bottom: 84px;
+      max-width: min(390px, calc(100vw - 36px));
+      padding: 11px 14px;
+      color: var(--white);
+      background: var(--ink);
+      border: 2px solid var(--yellow);
+      border-radius: var(--radius);
+      opacity: 0;
+      transform: translateY(18px);
+      pointer-events: none;
+      transition: .25s ease;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @keyframes pop { from { opacity: 0; transform: scale(.82); } to { opacity: 1; transform: scale(1); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 1100px) {
+      .lesson-grid { grid-template-columns: 1fr; }
+      .main-column { border-right: 0; border-bottom: 2px solid var(--ink); }
+      .assessment-shell { grid-template-columns: 1fr; }
+      .assessment-side { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+      .question-map { margin: 0; }
+    }
+    @media (max-width: 840px) {
+      .topbar { grid-template-columns: minmax(0, 1fr) auto; }
+      .mode-switch { grid-column: 1 / -1; grid-row: 2; }
+      .mode-switch button { min-height: 46px; white-space: nowrap; }
+      .top-actions { grid-column: 2; grid-row: 1; }
+      .icon-btn { width: 44px; height: 44px; }
+      .layout { grid-template-columns: 1fr; padding-top: 12px; }
+      .sidebar { position: static; max-height: none; }
+      .story-card { display: none; }
+      .lesson-nav { display: flex; gap: 5px; overflow-x: auto; padding: 7px; }
+      .lesson-btn { flex: 0 0 160px; border: 1px solid var(--line); border-radius: 6px; }
+      .stage-head { grid-template-columns: 1fr; }
+      .stage-badge { justify-self: start; }
+      .practice-brief { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+      .practice-brief > strong { grid-column: 1 / -1; }
+      .bottom-nav { grid-template-columns: minmax(82px, 1fr) auto minmax(82px, 1fr); }
+      .bottom-nav button { min-width: 82px; white-space: nowrap; }
+    }
+    @media (max-width: 560px) {
+      .brand-kicker { display: none; }
+      .top-actions .icon-btn:nth-child(-n+2) { display: none; }
+      .topbar { gap: 9px; padding: 9px 10px; }
+      .brand h1 { font-size: 1.08rem; }
+      .mode-switch button { min-height: 46px; padding: 7px 10px; white-space: nowrap; }
+      .icon-btn { width: 44px; height: 44px; }
+      .layout { padding-right: 8px; padding-left: 8px; }
+      .lesson-btn { flex-basis: 145px; min-height: 48px; }
+      .stage-head { padding: 16px; }
+      .stage-head h2 { font-size: 1.45rem; line-height: 1.24; }
+      .stage-head p { font-size: .94rem; line-height: 1.72; }
+      .stage-badge { min-width: 0; padding: 8px 11px; }
+      .practice-brief { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
+      .practice-brief > strong { grid-column: 1 / -1; }
+      .band { padding: 16px; }
+      .band-title { align-items: flex-start; line-height: 1.45; }
+      .concept-text, .key-item, .life-example, .teacher-tip, .feedback { font-size: .94rem; }
+      .key-item { grid-template-columns: 1fr; }
+      pre { max-height: 360px; padding: 14px; font-size: .78rem; line-height: 1.6; }
+      .sim-toolbar > .control { flex-basis: 100%; width: 100%; }
+      .run-btn, .primary-btn, .secondary-btn { min-height: 46px; }
+      .choice { min-height: 50px; padding: 11px 9px; }
+      .quiz-question { line-height: 1.68; }
+      .assessment-shell { padding: 12px; }
+      .assessment-panel { padding: 14px; }
+      .metric-row { grid-template-columns: 1fr; }
+      .score-inputs { grid-template-columns: 62px repeat(3, minmax(54px, 1fr)); }
+      .score-inputs input { padding: 5px; }
+      .assessment-side { grid-template-columns: 1fr; }
+      .bottom-nav { grid-template-columns: minmax(78px, 1fr) auto minmax(78px, 1fr); padding: 8px 10px calc(8px + env(safe-area-inset-bottom)); }
+      .bottom-nav button { min-width: 78px; padding: 7px 9px; font-size: .82rem; white-space: nowrap; }
+      .step-status { font-size: .72rem; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+    @media print {
+      .topbar, .sidebar, .bottom-nav, .sim-toolbar, .copy-btn { display: none !important; }
+      .app { padding: 0; }
+      .layout, .lesson-grid { display: block; padding: 0; }
+      .content, .stage-head, .lesson-grid { border: 0; box-shadow: none; }
+      .main-column { border: 0; }
+      .side-column { break-before: page; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#lessonContent">수업 내용으로 바로 가기</a>
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-kicker">2026 · 영신여자고등학교 2학년</span>
+        <h1>데이터 방송국: 파이썬 분석 교실</h1>
+      </div>
+      <div class="mode-switch" aria-label="수업 모드 선택">
+        <button class="active" data-mode="수업" type="button">수업</button>
+        <button data-mode="연습" type="button">연습</button>
+        <button data-mode="평가" type="button">평가</button>
+      </div>
+      <div class="top-actions">
+        <button class="icon-btn" id="fontDown" type="button" title="글자 작게" aria-label="글자 작게">A−</button>
+        <button class="icon-btn" id="fontUp" type="button" title="글자 크게" aria-label="글자 크게">A+</button>
+        <button class="icon-btn" id="fullscreen" type="button" title="전체 화면" aria-label="전체 화면">⛶</button>
+      </div>
+      <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+    </header>
+
+    <div class="layout">
+      <aside class="sidebar" aria-label="전체 수업 목차">
+        <div class="story-card">
+          <strong>오늘의 방송 원칙</strong>
+          <p>소문보다 숫자, 숫자보다 해석. 마지막에는 반드시 “어디까지 말할 수 있는가”를 덧붙입니다.</p>
+        </div>
+        <nav class="lesson-nav" id="lessonNav"></nav>
+      </aside>
+
+      <main class="content" id="lessonContent" tabindex="-1"></main>
+    </div>
+
+    <nav class="bottom-nav" aria-label="수업 단계 이동">
+      <button id="prevLesson" type="button">← 이전</button>
+      <div class="step-status" id="stepStatus">1 / 12</div>
+      <button class="next-btn" id="nextLesson" type="button">다음 →</button>
+    </nav>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    const 축제부스표 = [
+      {인덱스:0, 부스번호:101, 부스이름:'먹거리', 대기시간분:18, 만족도:4.2},
+      {인덱스:1, 부스번호:102, 부스이름:'사진관', 대기시간분:7, 만족도:4.7},
+      {인덱스:2, 부스번호:103, 부스이름:'미니게임', 대기시간분:25, 만족도:4.4},
+      {인덱스:3, 부스번호:104, 부스이름:'음료', 대기시간분:14, 만족도:4.1},
+      {인덱스:4, 부스번호:105, 부스이름:'책갈피', 대기시간분:9, 만족도:4.6}
+    ];
+    const 구역방문객 = {
+      먹거리:[42,55,38],
+      체험:[30,44,50],
+      공연:[60,72,65]
+    };
+    const 시간대별제보수값 = [
+      {이름표:'1교시', 자리:0, 제보수:12},
+      {이름표:'2교시', 자리:1, 제보수:20},
+      {이름표:'점심', 자리:2, 제보수:35},
+      {이름표:'5교시', 자리:3, 제보수:18},
+      {이름표:'방과후', 자리:4, 제보수:9}
+    ];
+    const 기본부스방문표 = [
+      {부스:'먹거리', 오전:21, 점심:26, 오후:46},
+      {부스:'사진관', 오전:76, 점심:33, 오후:33},
+      {부스:'미니게임', 오전:49, 점심:72, 오후:48},
+      {부스:'음료', 오전:71, 점심:25, 오후:32}
+    ];
+    const 최종부스분석표 = 축제부스표.map(({부스이름, 대기시간분, 만족도}) => ({부스이름, 대기시간분, 만족도}));
+
+    const lessons = [
+      {
+        chapter:'준비', title:'데이터 방송국 문을 열다', badge:'개념 지도', sim:'intro', question:'q1',
+        story:'축제 시작 30분 전, 운영 본부에서 “어디가 붐비고 어디를 도와야 할까?”라는 긴급 질문이 왔습니다. 우리는 대기 시간과 방문객 기록을 계산하고, 표로 찾고, 그래프로 보여 주는 데이터 방송국 기자가 됩니다.',
+        concept:'Colab은 웹에서 파이썬 코드를 칸별로 실행하는 노트입니다. 이 수업에서는 세 도구가 서로 이어져 하나의 분석을 완성합니다.',
+        example:'NumPy는 현장에서 들어온 숫자를 빠르게 더하는 계산기, Pandas는 부스 이름과 대기 시간을 정리한 상황판, Matplotlib은 복잡한 숫자를 한눈에 보여 주는 방송 화면입니다.',
+        keys:[['np','Numpy의 짧은 별명: 숫자 배열과 빠른 계산'],['pd','Pandas의 짧은 별명: 표 만들기·찾기·정리'],['plt','Matplotlib의 짧은 별명: 그래프로 보여 주기']],
+        code:`import numpy as np\nimport pandas as pd\nimport matplotlib.pyplot as plt\n\n# 축제 데이터 방송국의 취재 순서\n# 질문 → 숫자 계산 → 표 정리 → 그래프 → 사실·근거·한계`,
+        tip:'첫 3분에는 이름을 외우기보다 “계산기, 상황판, 방송 화면”을 손짓으로 연결하게 합니다.'
+      },
+      {
+        chapter:'Numpy', title:'대기 시간 열 개를 2행 5열로 정리하다', badge:'쉬움', sim:'array', question:'q2',
+        story:'오전 취재 다섯 건과 점심 취재 다섯 건이 도착했습니다. 10분부터 55분까지 5분 간격의 대기 시간 열 개를 두 줄짜리 상황판으로 정리합니다.',
+        concept:'배열은 같은 종류의 값을 반듯하게 모은 상자입니다. arange는 연속된 수를 만들고 reshape는 원소 수를 바꾸지 않은 채 모양만 바꿉니다.',
+        example:'대기 시간 메모 열 장을 오전 줄과 점심 줄에 다섯 장씩 놓아도 메모 수와 적힌 시간의 합은 바뀌지 않습니다. reshape는 값이 아니라 놓는 모양만 바꿉니다.',
+        keys:[['np.arange(10, 60, 5)','10부터 55까지 5분 간격으로 만들기'],['reshape(2, 5)','오전·점심 두 행으로 다시 놓기'],['np.sum(대기시간표)','기록된 대기 시간을 모두 더하기']],
+        code:`import numpy as np\n\n# 오전과 점심, 두 번의 취재에서 다섯 부스씩 확인한 대기 시간\n대기시간표 = np.arange(10, 60, 5).reshape(2, 5)\nprint(대기시간표)\n\n전체대기시간분 = np.sum(대기시간표)\nprint('기록된 대기 시간의 합:', 전체대기시간분, '분')`,
+        tip:'10개 값이므로 2×5처럼 곱이 10인 모양만 가능하다는 점을 먼저 손으로 확인하게 합니다.'
+      },
+      {
+        chapter:'Numpy', title:'어느 축제 구역에 사람이 가장 많이 왔을까', badge:'쉬움 → 중간', sim:'zones', question:'q9',
+        story:'먹거리·체험·공연 구역을 세 번씩 취재했습니다. 구역마다 방문객 합계와 평균을 계산해 지원 인력이 가장 필요한 곳을 찾습니다.',
+        concept:'뜻이 보이는 변수명은 코드 자체가 설명이 됩니다. 학생 수가 과목마다 같다면 총점과 평균의 크기 순서도 같습니다.',
+        example:'세 개의 같은 크기 컵에 음료를 나누어 담는다면 전체 양이 많은 묶음은 컵 한 개당 평균도 큽니다. 세 구역의 관찰 횟수가 모두 세 번이라 합계 순위와 평균 순위가 같습니다.',
+        keys:[['먹거리구역방문객','먹거리 구역의 세 번 기록'],['먹거리방문객합계','np.sum으로 구한 전체 방문객'],['먹거리방문객평균','np.mean으로 구한 한 번당 방문객'],['가장큰방문객합계','세 구역 합계 중 최댓값']],
+        code:`먹거리구역방문객 = np.array([42, 55, 38])\n체험구역방문객 = np.array([30, 44, 50])\n공연구역방문객 = np.array([60, 72, 65])\n\n먹거리방문객합계 = np.sum(먹거리구역방문객)\n체험방문객합계 = np.sum(체험구역방문객)\n공연방문객합계 = np.sum(공연구역방문객)\n\n먹거리방문객평균 = np.mean(먹거리구역방문객)\n체험방문객평균 = np.mean(체험구역방문객)\n공연방문객평균 = np.mean(공연구역방문객)\n\n가장큰방문객합계 = max(먹거리방문객합계, 체험방문객합계, 공연방문객합계)\n가장작은방문객합계 = min(먹거리방문객합계, 체험방문객합계, 공연방문객합계)\n\nprint('구역별 합계:', 먹거리방문객합계, 체험방문객합계, 공연방문객합계)\nprint('구역별 평균:', round(먹거리방문객평균, 2), round(체험방문객평균, 2), round(공연방문객평균, 2))\nprint('가장 큰 합계:', 가장큰방문객합계)\nprint('가장 작은 합계:', 가장작은방문객합계)`,
+        tip:'숫자만 말하지 않고 “세 번 관찰한 기록 안에서는”이라고 범위를 붙여 말하게 합니다.'
+      },
+      {
+        chapter:'Pandas', title:'Series의 이름표와 자리 번호', badge:'쉬움', sim:'series', question:'q3',
+        story:'방송국에 시간대별 제보 수가 한 줄로 들어왔습니다. “점심”이라는 이름표로도, 앞에서 세 번째라는 자리 번호로도 같은 35건을 찾습니다.',
+        concept:'Series는 이름표가 붙은 한 줄 자료입니다. loc는 이름표, iloc는 0부터 시작하는 자리 번호를 사용합니다.',
+        example:'급식 줄에서 “지현 학생”을 찾으면 이름표로 찾는 loc, “앞에서 세 번째 학생”을 찾으면 자리로 찾는 iloc입니다. 파이썬은 맨 앞을 0번으로 셉니다.',
+        keys:[['Series','시간 이름표가 붙은 한 줄 자료'],['loc[\'점심\']','점심이라는 이름표의 제보 수'],['iloc[2]','0부터 세어 세 번째 제보 수']],
+        code:`시간대별제보수배열 = np.array([12, 20, 35, 18, 9])\n시간대별제보수 = pd.Series(\n    시간대별제보수배열,\n    index=['1교시', '2교시', '점심', '5교시', '방과후']\n)\n\n시간대별제보수.loc['점심']\n시간대별제보수.iloc[2]`,
+        tip:'“점심”과 “2번 자리”가 같은 35를 가리키는 장면을 시뮬레이터로 번갈아 보여 줍니다.'
+      },
+      {
+        chapter:'Pandas', title:'축제 상황판에서 필요한 한 칸을 찾다', badge:'쉬움 → 중간', sim:'select', question:'q4',
+        story:'부스번호, 부스이름, 대기 시간, 만족도를 한 표에 담았습니다. 방송에 필요한 것은 부스 한 줄일 수도 있고, 대기 시간 한 칸일 수도 있습니다.',
+        concept:'DataFrame은 행과 열이 있는 표입니다. loc의 쉼표 앞은 행, 뒤는 열입니다. 콜론은 처음부터 끝까지를 뜻합니다.',
+        example:'아파트에서 “3층, 4호”처럼 행과 열을 함께 말하면 한 집을 찾습니다. loc의 쉼표도 “어느 행, 어느 항목”을 나누는 표시입니다.',
+        keys:[['loc[2]','인덱스 2인 미니게임 행'],['loc[3, \'대기시간분\']','음료 부스의 대기 시간 한 칸'],['loc[:, \'부스이름\']','모든 행의 부스이름 열'],['loc[:2, :\'대기시간분\']','행과 열을 범위로 선택']],
+        code:`축제부스표 = pd.DataFrame({\n    '부스번호': [101, 102, 103, 104, 105],\n    '부스이름': ['먹거리', '사진관', '미니게임', '음료', '책갈피'],\n    '대기시간분': [18, 7, 25, 14, 9],\n    '만족도': [4.2, 4.7, 4.4, 4.1, 4.6]\n})\n\n축제부스표.loc[2]\n축제부스표.loc[3, '대기시간분']\n축제부스표.loc[:, '부스이름']\n축제부스표.loc[:, :]\n축제부스표.loc[:2, :'대기시간분']`,
+        tip:'loc 코드를 읽을 때마다 “행 먼저, 열 나중”을 소리 내어 말하게 하면 쉼표 위치 실수가 줄어듭니다.'
+      },
+      {
+        chapter:'Pandas', title:'도움이 필요한 부스만 남기다', badge:'중간', sim:'filter', question:'q5',
+        story:'“대기 시간이 15분 이상”, “만족도가 4.4 이상”, “두 조건 모두”, “하나 이상”. 짧은 말 한마디의 차이가 방송에 남는 부스를 바꿉니다.',
+        concept:'비교식은 각 행을 True 또는 False로 판정합니다. 그 결과를 loc에 넣으면 True인 행만 남습니다. &는 모두, |는 하나 이상입니다.',
+        example:'간식을 고를 때 “1만 원 이하이면서 별점 4점 이상”이면 두 조건 모두라서 &입니다. “매운맛이거나 치즈맛”이면 하나만 맞아도 되므로 |입니다.',
+        keys:[['>','초과: 같은 값은 포함하지 않음'],['>=','이상: 같은 값도 포함'],['&','두 조건 모두'],['|','두 조건 중 하나 이상']],
+        code:`대기시간15분초과조건 = 축제부스표['대기시간분'] > 15\n대기15분초과부스 = 축제부스표.loc[대기시간15분초과조건]\n만족도4점5이상부스 = 축제부스표.loc[축제부스표['만족도'] >= 4.5]\n\n두조건모두부스 = 축제부스표.loc[\n    (축제부스표['대기시간분'] >= 15) & (축제부스표['만족도'] >= 4.4)\n]\n한조건이상부스 = 축제부스표.loc[\n    (축제부스표['대기시간분'] >= 15) | (축제부스표['만족도'] >= 4.6)\n]`,
+        tip:'& 결과 수는 | 결과 수보다 같거나 적다는 검산 규칙을 알려 주면 기호를 뒤바꾼 오답을 스스로 잡을 수 있습니다.'
+      },
+      {
+        chapter:'Pandas', title:'정렬하고 행과 열을 뒤집다', badge:'중간', sim:'sort', question:'q6',
+        story:'대기 시간이 긴 부스를 맨 위로 올리면 지원할 곳이 바로 보입니다. 방송 화면이 좁을 때는 행과 열을 바꾸어 읽기 쉽게 만들 수도 있습니다.',
+        concept:'sort_values는 지정한 열을 기준으로 행 순서를 바꿉니다. ascending=False는 큰 값부터입니다. T는 행과 열을 서로 바꿉니다.',
+        example:'음악 목록을 재생 횟수가 많은 순서로 바꾸어도 노래 자체는 바뀌지 않습니다. 정렬도 값은 그대로 두고 보이는 순서만 바꿉니다.',
+        keys:[['sort_values(\'대기시간분\')','대기 시간 오름차순'],['ascending=False','긴 대기 시간부터 내림차순'],['.T','행과 열 바꾸기']],
+        code:`대기시간오름차순표 = 축제부스표.sort_values('대기시간분')\n대기시간내림차순표 = 축제부스표.sort_values('대기시간분', ascending=False)\n\n방송용세로표 = 한조건이상부스.T\n방송용세로표`,
+        tip:'정렬은 값 자체를 바꾸지 않고 행의 순서만 바꾼다는 점을 정렬 전후 합계로 확인하게 합니다.'
+      },
+      {
+        chapter:'Pandas', title:'부스 방문표에 열을 만들고 지우다', badge:'중간 → 어려움', sim:'tablework', question:'q7',
+        story:'네 부스의 오전·점심·오후 방문객 표를 만들고 평균·합계·저녁 열을 추가합니다. 방송 목적에 따라 부스 행이나 시간대 열도 제외합니다.',
+        concept:'새 열은 대괄호로 만들고 del로 지웁니다. insert는 원하는 위치에 끼웁니다. drop의 axis=0은 행, axis=1은 열입니다.',
+        example:'시간표에 “저녁” 칸을 새로 끼우는 일은 열 추가입니다. 미니게임 한 줄을 빼면 행 삭제이고, 모든 부스의 저녁 칸을 빼면 열 삭제입니다.',
+        keys:[['np.random.seed(2026)','모두 같은 방문객 연습표를 얻는 장치'],['평균 열','세 시간대 방문객을 더해 3으로 나눔'],['insert','원하는 위치에 저녁 열 끼우기'],['drop','부스 행 또는 시간대 열 제외']],
+        code:`np.random.seed(2026)\n부스별방문객수 = np.random.randint(20, 80, size=(4, 3))\n부스방문표 = pd.DataFrame(\n    부스별방문객수,\n    index=['먹거리', '사진관', '미니게임', '음료'],\n    columns=['오전', '점심', '오후']\n)\n\n부스방문표['평균'] = round(\n    (부스방문표['오전'] + 부스방문표['점심'] + 부스방문표['오후']) / 3,\n    2\n)\n부스방문표['합계'] = 부스방문표['오전'] + 부스방문표['점심'] + 부스방문표['오후']\ndel 부스방문표['합계']\n\n부스방문표.insert(2, '저녁', [40, 50, 45, 55])\n미니게임제외표 = 부스방문표.drop('미니게임', axis='rows')\n저녁제외표 = 미니게임제외표.drop('저녁', axis='columns')`,
+        tip:'드롭다운에서 연산을 바꿀 때 행 수와 열 수가 어떻게 달라지는지 먼저 예측하게 한 뒤 실행합니다.'
+      },
+      {
+        chapter:'Pandas', title:'빈칸을 발견하고 처리 근거를 세우다', badge:'어려움', sim:'missing', question:'q11',
+        story:'미니게임 부스의 점심 방문객 수가 비어 있습니다. 지울지, 채울지 결정하기 전에 취재가 빠졌는지 기계가 멈췄는지부터 확인합니다.',
+        concept:'NaN은 값이 비어 있음을 뜻합니다. dropna(axis=0)은 빈칸이 있는 행을, axis=1은 열을 지웁니다. fillna는 선택한 값으로 채웁니다.',
+        example:'배달 주문표의 빈칸은 주문이 0건이라는 뜻일 수도, 아직 입력하지 않았다는 뜻일 수도 있습니다. 이유를 모르고 0으로 채우면 “모름”을 “없음”으로 바꾸는 잘못이 생깁니다.',
+        keys:[['astype(\'float\')','NaN을 담을 수 있는 실수형으로 변환'],['dropna(axis=0)','빈칸이 있는 행 제외'],['dropna(axis=1)','빈칸이 있는 열 제외'],['fillna','근거 있는 값으로 채우기']],
+        code:`방문수실수표 = 부스방문표.astype('float')\n방문수실수표.loc['미니게임', '점심'] = np.nan\n\n빈칸행제외표 = 방문수실수표.dropna(axis=0)\n빈칸열제외표 = 방문수실수표.dropna(axis=1)\n문자열로빈칸채운표 = 방문수실수표.astype('object').fillna('확인 중')\n\n# 나머지 부스의 점심 평균으로 채우는 연습\n점심평균방문객 = 방문수실수표['점심'].mean()\n평균으로빈칸채운표 = 방문수실수표.fillna({'점심': 점심평균방문객})`,
+        tip:'“확인 중”은 화면 표시에는 쉽지만 숫자 계산에는 맞지 않는다는 점을 직접 비교하게 합니다.'
+      },
+      {
+        chapter:'Matplotlib', title:'시간대별 대기 시간을 선으로 잇다', badge:'쉬움', sim:'line', question:'q8',
+        story:'네 번 기록한 대기 시간 8, 15, 23, 12분을 순서대로 이으면 줄이 언제 길어졌고 짧아졌는지 흐름이 보입니다.',
+        concept:'Colab에 한글 글꼴을 설치한 뒤 런타임을 다시 시작합니다. plot에 y값만 주면 x는 0, 1, 2, 3으로 자동 생성됩니다.',
+        example:'사진 네 장에 이름을 붙이지 않고 순서대로 앨범에 넣으면 휴대전화가 0번부터 3번까지 자리 번호를 붙입니다. x값을 따로 주지 않으면 같은 방식으로 자동 번호가 생깁니다.',
+        keys:[['fonts-nanum','Colab 한글 글꼴 패키지'],['plt.rcParams','그래프 기본 글꼴 설정'],['plt.plot','꺾은선그래프'],['plt.show','그래프 화면에 표시']],
+        code:`!sudo apt-get install -y fonts-nanum\n!sudo fc-cache -fv\n!rm ~/.cache/matplotlib -rf\n\n# 런타임을 다시 시작한 뒤\nimport matplotlib.pyplot as plt\nplt.rcParams['font.family'] = 'NanumBarunGothic'\n\n시간대별대기시간 = [8, 15, 23, 12]\nplt.plot(시간대별대기시간, marker='o')\nplt.title('시간대별 축제 대기 시간')\nplt.xlabel('기록 순서')\nplt.ylabel('대기 시간(분)')\nplt.show()`,
+        tip:'선을 이어도 되는 순서인지 먼저 묻습니다. 여기서는 자리 번호 순서이지만 실제 자료에서는 시간·거리처럼 의미 있는 순서가 필요합니다.'
+      },
+      {
+        chapter:'Matplotlib', title:'막대·산점도·상자그림을 비교하다', badge:'중간 → 어려움', sim:'charts', question:'q10',
+        story:'부스별 판매량, 운영 인원과 대기 시간의 관계, 오전·오후 방문객, 대기 시간의 퍼짐을 서로 다른 그래프로 방송합니다.',
+        concept:'막대는 범주별 크기, 산점도는 두 수치의 관계, 상자그림은 분포와 멀리 떨어진 값을 봅니다. 꺾은선과 막대를 한 화면에 둘 수도 있습니다.',
+        example:'메뉴별 판매량 비교는 막대그래프, 운동 시간과 심박수처럼 두 숫자의 관계는 산점도, 통학 시간의 퍼짐은 상자그림이 알맞습니다. 먼저 질문을 정하고 그래프를 고릅니다.',
+        keys:[['plt.bar','부스별 판매 개수 비교'],['plt.scatter','운영 인원과 대기 시간 관계'],['plt.boxplot','대기 시간 분포 확인'],['plt.legend','오전·오후 범례 표시']],
+        code:`부스이름 = ['먹거리', '사진관', '미니게임', '음료']\n판매개수 = [95, 70, 82, 105]\nplt.bar(부스이름, 판매개수)\nplt.show()\n\n운영인원 = [2, 3, 1, 5, 4]\n대기시간분 = [30, 18, 40, 10, 14]\nplt.scatter(운영인원, 대기시간분)\nplt.show()\n\n부스이름 = ['먹거리', '사진관', '미니게임', '음료', '책갈피']\n오전방문객 = [42, 28, 35, 31, 24]\n오후방문객 = [58, 40, 52, 49, 36]\nplt.plot(부스이름, 오전방문객, color='g', marker='o', label='오전')\nplt.bar(부스이름, 오후방문객, color='skyblue', label='오후')\nplt.legend()\nplt.show()\n\n대기시간기록 = [8, 12, 18, 25, 7, 14, 9, 21, 16, 11]\nplt.boxplot(대기시간기록, vert=False)\nplt.show()`,
+        tip:'그래프를 본 뒤 “보이는 사실” 한 문장과 “그래프만으로는 모르는 것” 한 문장을 짝으로 말하게 합니다.'
+      },
+      {
+        chapter:'실전', title:'사실·근거·한계로 마지막 방송을 완성하다', badge:'평가 연결', sim:'final', question:'q12',
+        story:'마지막 방송입니다. 다섯 부스의 평균 대기 시간과 만족도를 계산하고 가장 긴 줄과 만족도 최고 부스를 찾습니다. 결론은 관찰한 다섯 부스의 범위를 넘지 않습니다.',
+        concept:'좋은 분석 문장은 보이는 사실, 숫자 근거, 해석의 한계를 모두 포함합니다. 평가에서는 코드 결과뿐 아니라 이 연결을 확인합니다.',
+        example:'점심 한 번 줄이 길었다고 “이 부스는 언제나 운영이 나쁘다”고 말할 수는 없습니다. 조사한 날짜와 시간, 기다린 이유를 함께 살펴야 믿을 수 있는 결론이 됩니다.',
+        keys:[['사실','표에서 직접 확인한 부스와 값'],['근거','평균 대기 14.6분 같은 숫자'],['한계','한 번의 축제 기록만으로 언제나 그렇다고 단정할 수 없음']],
+        code:`최종부스분석표 = pd.DataFrame({\n    '부스이름': ['먹거리', '사진관', '미니게임', '음료', '책갈피'],\n    '대기시간분': [18, 7, 25, 14, 9],\n    '만족도': [4.2, 4.7, 4.4, 4.1, 4.6]\n})\n\n평균대기시간 = 최종부스분석표['대기시간분'].mean()\n평균만족도 = 최종부스분석표['만족도'].mean()\n가장긴대기부스 = 최종부스분석표.loc[\n    최종부스분석표['대기시간분'].idxmax(), '부스이름'\n]\n만족도최고부스 = 최종부스분석표.loc[\n    최종부스분석표['만족도'].idxmax(), '부스이름'\n]\n\nprint(f'평균 대기 시간: {평균대기시간:.1f}분')\nprint(f'평균 만족도: {평균만족도:.1f}점')\nprint(f'가장 긴 줄의 부스: {가장긴대기부스}')\nprint(f'만족도가 가장 높은 부스: {만족도최고부스}')`,
+        tip:'평가 모드에는 쉬움 4, 중간 4, 어려움 4문항이 있습니다. 오답도 왜 그럴듯한지까지 함께 설명하도록 구성했습니다.'
+      }
+    ];
+
+    const questions = [
+      {
+        id:'q1', level:'쉬움', prompt:'세 라이브러리의 역할을 바르게 연결한 것은?',
+        choices:[
+          ['Numpy-그래프, Pandas-배열, Matplotlib-표', '세 역할의 위치를 서로 바꾼 선택지입니다. 이름보다 실제 하는 일을 연결해야 합니다.'],
+          ['Numpy-배열 계산, Pandas-표 처리, Matplotlib-그래프', '정답입니다. 계산 → 표 → 시각화의 흐름과 정확히 맞습니다.'],
+          ['Numpy-표 처리, Pandas-그래프, Matplotlib-배열', 'Pandas와 Matplotlib의 역할이 뒤바뀌었습니다.'],
+          ['세 라이브러리는 모두 같은 일을 한다', '함께 쓰지만 맡은 중심 역할은 다릅니다.']
+        ], answer:1,
+        steps:['Numpy가 배열 연산을 담당하는지 확인합니다.','Pandas가 Series와 DataFrame을 다루는지 확인합니다.','Matplotlib이 plot, bar, scatter 같은 그래프를 그리는지 확인합니다.'],
+        daily:'축제 방송국에서 NumPy는 대기 시간을 더하는 계산기, Pandas는 부스 상황판, Matplotlib은 숫자를 보여 주는 방송 화면이라고 생각하면 역할이 쉽게 나뉩니다.',
+        model:'Numpy는 배열 계산, Pandas는 표 처리, Matplotlib은 시각화를 담당한다.'
+      },
+      {
+        id:'q2', level:'쉬움', prompt:'np.arange(10, 60, 5).reshape(2, 5)로 만든 대기시간표의 전체 합은?',
+        choices:[['10','원소의 개수만 센 오답입니다. 대기 시간 값 자체를 더해야 합니다.'],['55','마지막 값 하나만 고른 오답입니다.'],['325','정답입니다. 10부터 55까지 열 개를 모두 더한 값입니다.'],['650','325를 두 행이므로 다시 두 배 한 오답입니다. reshape 뒤에도 각 값은 한 번씩만 있습니다.']], answer:2,
+        steps:['arange(10, 60, 5)는 10,15,20,...,55를 만듭니다.','reshape는 이 열 개를 2행 5열로 놓을 뿐 값을 복사하지 않습니다.','(10+55)×10÷2 = 325이므로 전체 합은 325분입니다.'],
+        daily:'대기 시간 메모 열 장을 한 줄에서 두 줄로 옮겨도 적힌 분 수의 합은 같습니다. 책상 배치가 바뀌어도 학생 수가 늘지 않는 것과 같은 원리입니다.',
+        model:'reshape는 값의 개수와 내용을 바꾸지 않으므로 대기 시간의 전체 합은 325분이다.'
+      },
+      {
+        id:'q3', level:'쉬움', prompt:'제보 수가 12,20,35,18,9일 때 시간대별제보수.iloc[2]의 결과는?',
+        choices:[['20','자리를 1부터 세어 두 번째 값으로 고른 오답입니다.'],['35','정답입니다. iloc는 0부터 세어 2번 자리를 찾습니다.'],["'점심'",'iloc은 이름표가 아니라 그 자리에 저장된 값을 돌려줍니다.'],['18','2번 뒤의 다음 값을 고른 오답입니다.']], answer:1,
+        steps:['iloc은 이름이 아니라 자리 번호를 사용합니다.','첫 자리는 0, 둘째는 1, 셋째는 2입니다.','2번 자리는 점심이고 그곳의 제보 수는 35입니다.'],
+        daily:'급식 줄을 앞에서 0번, 1번, 2번으로 센다면 iloc[2]는 숫자 2가 아니라 세 번째 자리에 있는 학생을 가리킵니다.',
+        model:'iloc[2]는 0부터 세어 세 번째 값인 점심 제보 수 35를 반환한다.'
+      },
+      {
+        id:'q4', level:'쉬움', prompt:"축제부스표.loc[3, '대기시간분']의 결과는?",
+        choices:[['음료','행 전체가 아니라 대기시간분 열의 한 칸을 요청했습니다.'],['25','인덱스 2인 미니게임의 대기 시간과 혼동했습니다.'],['14','정답입니다. 인덱스 3인 음료 부스의 대기 시간입니다.'],['9','마지막 행인 책갈피의 대기 시간과 혼동했습니다.']], answer:2,
+        steps:['쉼표 앞의 3으로 인덱스 3인 음료 부스 행을 찾습니다.',"쉼표 뒤의 '대기시간분' 열을 찾습니다.",'그 행과 열이 만나는 값은 14입니다.'],
+        daily:'아파트에서 “3층, 2호”처럼 행과 열을 함께 말해야 한 집을 찾습니다. loc도 먼저 행을 찾고 그다음 원하는 항목 한 칸을 찾습니다.',
+        model:'인덱스 3인 음료 부스와 대기시간분 열이 만나는 값은 14이다.'
+      },
+      {
+        id:'q5', level:'중간', prompt:"(대기시간분 >= 15) & (만족도 >= 4.4)를 만족하는 부스 수는?",
+        choices:[['0개','미니게임 부스가 두 조건을 모두 만족한다는 점을 놓쳤습니다.'],['1개','정답입니다. 미니게임 한 곳만 대기 25분이고 만족도 4.4입니다.'],['3개','대기 시간 조건만 만족하는 먹거리까지 포함했거나 &를 잘못 읽은 오답입니다.'],['5개','&를 모든 행을 남기는 기호로 잘못 해석했습니다.']], answer:1,
+        steps:['&는 두 조건을 모두 만족해야 한다는 뜻입니다.','대기 15분 이상인 먹거리와 미니게임을 먼저 찾습니다.','그중 만족도도 4.4 이상인 곳은 미니게임 한 곳입니다.'],
+        daily:'놀이기구가 “키 140cm 이상이고 나이 12세 이상”을 요구하면 두 검사를 모두 통과해야 합니다. &도 두 칸 모두 확인 표시가 있어야 합니다.',
+        model:'대기 시간과 만족도 조건을 모두 만족하는 부스는 미니게임 한 곳이다.'
+      },
+      {
+        id:'q6', level:'중간', prompt:"(대기시간분 >= 15) | (만족도 >= 4.6)를 만족하는 부스 수는?",
+        choices:[['1개','|를 &처럼 읽어 두 조건을 모두 만족한 행만 센 오답입니다.'],['2개','대기 시간이 긴 두 부스만 세고 만족도 조건을 놓쳤습니다.'],['4개','정답입니다. 먹거리, 사진관, 미니게임, 책갈피가 하나 이상의 조건을 만족합니다.'],['5개','음료는 대기 14분, 만족도 4.1이라 어느 조건도 만족하지 않습니다.']], answer:2,
+        steps:['|는 두 조건 중 하나만 맞아도 남깁니다.','대기 15분 이상은 먹거리와 미니게임입니다. 만족도 4.6 이상은 사진관과 책갈피입니다.','두 모음을 합치면 겹침 없이 네 부스가 남습니다.'],
+        daily:'체험 조건이 “방송부이거나 사진부”라면 둘 중 한 동아리에만 속해도 참여할 수 있습니다. |는 입장권이 두 종류이고 하나만 있어도 되는 경우입니다.',
+        model:'두 조건 중 하나 이상을 만족하는 먹거리, 사진관, 미니게임, 책갈피의 4개 부스가 남는다.'
+      },
+      {
+        id:'q7', level:'중간', prompt:"부스방문표.drop('저녁', axis=1)의 뜻은?",
+        choices:[['저녁이라는 부스 행을 지운다','저녁은 시간대 열 이름이며 axis=1은 열 방향입니다.'],['저녁 열을 지운다','정답입니다. 모든 부스의 저녁 기록 열이 제외됩니다.'],['두 번째 행을 지운다','axis의 1은 위치 번호가 아니라 열 방향을 뜻합니다.'],['저녁 값을 1로 바꾼다','drop은 값을 바꾸지 않고 행이나 열을 제외합니다.']], answer:1,
+        steps:["'저녁'이 시간대 열 이름인지 확인합니다.",'axis=1은 열, axis=0은 행입니다.','따라서 모든 부스에 걸친 저녁 열이 제외됩니다.'],
+        daily:'시간표에서 월요일 한 줄을 빼는 것은 행 삭제이고 모든 요일의 체육 칸을 빼는 것은 열 삭제입니다. 저녁도 표 전체를 세로로 잇는 한 열입니다.',
+        model:'axis=1은 열 방향이므로 저녁 열을 지운다.'
+      },
+      {
+        id:'q8', level:'중간', prompt:'plt.plot([8,15,23,12])에서 자동으로 정해지는 x값은?',
+        choices:[['8,15,23,12','입력한 네 값은 y값이며 x는 자리 번호입니다.'],['0,1,2,3','정답입니다. 네 y값에 0부터 시작하는 자리를 붙입니다.'],['1,2,3,4','사람이 세는 순서와 달리 파이썬의 기본 자리는 0부터 시작합니다.'],['정해지지 않아 오류가 난다','Matplotlib은 y만 주면 x를 자동으로 만듭니다.']], answer:1,
+        steps:['plot에 한 리스트만 전달하면 그것을 y값으로 봅니다.','y값은 네 개입니다.','자리 번호 0,1,2,3이 x값이 됩니다.'],
+        daily:'대기 시간 메모 네 장에 시간 이름을 쓰지 않으면 컴퓨터가 첫 메모부터 0, 1, 2, 3이라는 자리 번호를 붙인다고 생각하면 됩니다.',
+        model:'y값만 주면 x는 0부터 시작하는 0,1,2,3으로 자동 생성된다.'
+      },
+      {
+        id:'q9', level:'어려움', prompt:'세 구역을 모두 세 번씩 관찰했다면 방문객 합계 순위와 평균 순위의 관계는?',
+        choices:[['항상 반대다','같은 양수 3으로 나누면 크기 순서가 뒤집히지 않습니다.'],['항상 같다','정답입니다. 모든 합계를 같은 관찰 횟수 3으로 나누기 때문입니다.'],['가장 큰 한 번의 기록이 있는 구역만 같다','한 번의 최댓값만으로 합계와 평균 순위를 정할 수 없습니다.'],['표준편차가 있어야만 알 수 있다','퍼짐을 비교할 때는 유용하지만 이 순위 관계에는 필요하지 않습니다.']], answer:1,
+        steps:['평균은 방문객 합계 ÷ 관찰 횟수입니다.','세 구역 모두 관찰 횟수가 3으로 같습니다.','같은 양수 3으로 나누므로 합계의 크기 순서가 그대로 유지됩니다.'],
+        daily:'각 묶음에 같은 크기 컵이 세 개씩 있다면 전체 음료가 많은 묶음은 컵 한 개당 평균도 많습니다. 컵 수가 다르면 이 결론은 바로 쓸 수 없습니다.',
+        model:'관찰 횟수가 모두 세 번이라 같은 수로 나누므로 방문객 합계와 평균의 순위는 같다.'
+      },
+      {
+        id:'q10', level:'어려움', prompt:'운영 인원과 대기 시간의 관계를 살피는 알맞은 그래프와 해석은?',
+        choices:[['막대그래프로 그리고 인원 수가 대기 시간의 유일한 원인이라고 확정','두 수치의 짝을 보기 어렵고 원인을 과장했습니다.'],['산점도로 관계를 보고 인과는 단정하지 않음','정답입니다. 두 수치의 관계와 해석 한계를 함께 지켰습니다.'],['꺾은선으로 부스 순서를 시간 흐름이라고 가정','부스의 나열 순서가 시간이라는 근거가 없습니다.'],['원그래프로 두 수치의 비율을 비교','원그래프는 전체 중 구성 비율을 볼 때 알맞습니다.']], answer:1,
+        steps:['운영 인원과 대기 시간은 모두 수치형 값입니다.','두 숫자의 짝을 점 하나로 나타내는 산점도가 알맞습니다.','관계가 보여도 메뉴 인기, 조리 시간 같은 다른 요인이 있으므로 원인이라고 단정하지 않습니다.'],
+        daily:'직원이 같은 수인 가게도 메뉴 난이도와 주문량에 따라 기다리는 시간이 달라집니다. 점들이 함께 움직여 보여도 직원 수 하나만이 원인이라고 말할 수 없습니다.',
+        model:'산점도로 운영 인원과 대기 시간의 관계를 살피되 상관만으로 인과를 단정하지 않는다.'
+      },
+      {
+        id:'q11', level:'어려움', prompt:"숫자형 점심 방문객 수의 NaN을 '확인 중'으로 채웠을 때 중요한 문제는?",
+        choices:[['빈칸이 사라져 아무 문제가 없다','화면의 빈칸은 사라져도 숫자와 문자가 한 열에 섞입니다.'],['방문객 평균이 자동으로 더 정확해진다','문자는 방문객 수가 아니며 정확해질 근거도 없습니다.'],['열에 숫자와 문자가 섞여 계산이 어려워진다','정답입니다. 보기에는 쉬워도 수치 계산용 자료형이 섞입니다.'],['모든 방문객 수가 0이 된다','fillna는 빈칸 하나만 바꾸고 다른 숫자는 유지합니다.']], answer:2,
+        steps:['점심 열의 목적은 방문객 수 계산입니다.','문자열을 넣으면 숫자와 문자가 같은 열에 섞입니다.','평균과 그래프 계산이 어려워질 수 있으므로 빈 이유를 확인하고 근거 있는 숫자 처리 방법을 정해야 합니다.'],
+        daily:'계산기에 가격 대신 “품절”을 넣으면 합계를 낼 수 없습니다. 방문객 수 열도 같아서 화면 표시용 말과 계산용 숫자를 구분해야 합니다.',
+        model:'문자열 대체는 방문객 수 열에 숫자와 문자를 섞어 평균 같은 수치 분석을 어렵게 한다.'
+      },
+      {
+        id:'q12', level:'어려움', prompt:'“미니게임의 대기 시간이 25분이므로 언제나 운영이 가장 나쁜 부스다”의 가장 큰 문제는?',
+        choices:[['25분은 긴 시간이 아니기 때문이다','주어진 표에서는 다섯 부스 중 가장 긴 대기 시간이 맞습니다. 핵심 문제는 결론의 범위입니다.'],['미니게임을 표에서 찾을 수 없기 때문이다','표에 미니게임이 분명히 있습니다.'],['한 번의 대기 기록을 언제나로 넓히고 긴 줄의 원인도 확인하지 않았다','정답입니다. 표에서 확인한 사실보다 결론을 지나치게 넓혔습니다.'],['대기 시간은 서로 비교할 수 없기 때문이다','같은 단위의 대기 시간은 비교할 수 있지만 조사 조건과 원인을 확인해야 합니다.']], answer:2,
+        steps:['표에서 직접 확인되는 사실은 이번 기록에서 미니게임의 대기 시간 25분이 가장 길다는 것입니다.','긴 줄은 인기, 게임 시간, 운영 인원 등 여러 이유로 생길 수 있습니다.','다른 시간과 날짜 자료가 없으므로 언제나 운영이 나쁘다고 일반화할 수 없습니다.'],
+        daily:'오늘 한 번 버스가 늦었다고 그 노선이 언제나 가장 나쁘다고 말할 수는 없습니다. 날짜, 교통 상황, 여러 번의 도착 기록을 함께 봐야 합니다.',
+        model:'이번 다섯 부스 기록에서는 미니게임의 대기 시간이 25분으로 가장 길지만 한 번의 관찰만으로 언제나 운영이 가장 나쁘다고 단정할 수 없다.'
+      }
+    ];
+
+    const state = {
+      lesson:0,
+      mode:'수업',
+      fontSize:16,
+      runAction:null,
+      practiceAnswers:{},
+      assessmentAnswers:{},
+      assessmentIndex:0,
+      assessmentFinished:false
+    };
+
+    const app = document.querySelector('#app');
+    const content = document.querySelector('#lessonContent');
+    const nav = document.querySelector('#lessonNav');
+    const toast = document.querySelector('#toast');
+
+    function escapeHtml(value) {
+      return String(value).replace(/[&<>'"]/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[char]));
+    }
+
+    function sum(values) { return values.reduce((total, value) => total + Number(value), 0); }
+    function mean(values) { return values.length ? sum(values) / values.length : NaN; }
+    function cloneRows(rows) { return rows.map(row => ({...row})); }
+
+    function tableHtml(rows, columns, highlightIndex = null) {
+      if (!rows.length) return '<div class="empty-state">조건에 맞는 행이 없습니다.<br>비교 기호와 기준값을 다시 확인하세요.</div>';
+      return `<div class="data-table-wrap"><table><thead><tr>${columns.map(column => `<th>${escapeHtml(column)}</th>`).join('')}</tr></thead><tbody>${rows.map((row,index) => `<tr class="${index === highlightIndex ? 'highlight' : ''}">${columns.map(column => `<td>${row[column] === null || Number.isNaN(row[column]) ? '<span class="nan">NaN</span>' : escapeHtml(row[column])}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function announce(message) {
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(announce.timer);
+      announce.timer = setTimeout(() => toast.classList.remove('show'), 1800);
+    }
+
+    function levelClass(level) { return level === '중간' ? 'medium' : level === '어려움' ? 'hard' : ''; }
+    function answersForCurrentMode() { return state.mode === '평가' ? state.assessmentAnswers : state.practiceAnswers; }
+
+    function renderNav() {
+      nav.innerHTML = lessons.map((lesson,index) => `<button type="button" class="lesson-btn ${index === state.lesson ? 'active' : ''}" data-lesson="${index}"><span class="lesson-number">${String(index + 1).padStart(2,'0')}</span><span class="lesson-name">${escapeHtml(lesson.title)}</span></button>`).join('');
+      nav.querySelectorAll('[data-lesson]').forEach(button => button.addEventListener('click', () => goLesson(Number(button.dataset.lesson))));
+    }
+
+    function renderLesson() {
+      app.classList.toggle('practice-mode', state.mode === '연습');
+      if (state.mode === '평가') {
+        renderAssessment();
+        updateChrome();
+        return;
+      }
+      const lesson = lessons[state.lesson];
+      const isPractice = state.mode === '연습';
+      const stepNumber = String(state.lesson + 1).padStart(2,'0');
+      const conceptBand = `<article class="band concept-band">
+        <h3 class="band-title"><span class="band-index">${isPractice ? '4' : '1'}</span> 쉬운 말로 개념 잡기</h3>
+        <div class="concept-text"><p>${escapeHtml(lesson.concept)}</p></div>
+        <div class="life-example"><strong>생활 속에서 떠올리기</strong>${escapeHtml(lesson.example)}</div>
+        <div class="key-list">${lesson.keys.map(item => `<div class="key-item"><code>${escapeHtml(item[0])}</code><span>${escapeHtml(item[1])}</span></div>`).join('')}</div>
+      </article>`;
+      const codeBand = `<article class="band code-band">
+        <h3 class="band-title"><span class="band-index">${isPractice ? '3' : '2'}</span> 코랩 코드 읽기</h3>
+        <div class="code-shell">
+          <div class="code-toolbar"><span><strong>Colab</strong> · Python</span><button type="button" class="copy-btn" id="copyCode">코드 복사</button></div>
+          <pre><code id="codeText"></code></pre>
+        </div>
+      </article>`;
+      const simulatorBand = `<article class="band simulator-band">
+        <h3 class="band-title"><span class="band-index">${isPractice ? '1' : '3'}</span> ${isPractice ? '먼저 예상하고 직접 실행하기' : '실행 결과 시뮬레이터'}</h3>
+        <div class="simulator" id="simulator"></div>
+      </article>`;
+      const quizBand = `<section class="band quiz-band">
+        <h3 class="band-title"><span class="band-index">${isPractice ? '2' : '4'}</span> ${isPractice ? '내 말로 풀어 보는 문제' : '바로 확인 문제'}</h3>
+        <div id="quickQuiz"></div>
+      </section>`;
+      const lessonBody = isPractice
+        ? `<section class="lesson-grid practice-layout"><div class="main-column">${simulatorBand}${quizBand}</div><aside class="side-column">${codeBand}${conceptBand}</aside></section>`
+        : `<section class="lesson-grid"><div class="main-column">${conceptBand}${codeBand}${simulatorBand}</div><aside class="side-column"><section class="band teacher-only"><h3 class="band-title"><span class="band-index">T</span> 교사용 진행 포인트</h3><div class="teacher-tip"><strong>칠판 질문</strong>${escapeHtml(lesson.tip)}</div></section>${quizBand}</aside></section>`;
+      content.innerHTML = `
+        <section class="stage-head ${isPractice ? 'practice-stage' : ''}">
+          <div>
+            <span class="eyebrow">${isPractice ? '연습 미션' : escapeHtml(lesson.chapter)} · STEP ${stepNumber}</span>
+            <h2>${isPractice ? `미션 ${stepNumber}. ` : ''}${escapeHtml(lesson.title)}</h2>
+            <p>${isPractice ? '설명부터 외우지 않습니다. 결과를 먼저 예상하고, 값을 바꾸어 실행한 뒤, 문제로 이유를 확인합니다.' : escapeHtml(lesson.story)}</p>
+          </div>
+          <div class="stage-badge">${isPractice ? '직접 해보기' : escapeHtml(lesson.badge)}</div>
+        </section>
+        ${isPractice ? `<section class="practice-brief" aria-label="연습 순서"><strong>연습 순서</strong><span class="practice-step"><b>1</b>결과 예상</span><span class="practice-step"><b>2</b>값 바꾸기</span><span class="practice-step"><b>3</b>직접 실행</span><span class="practice-step"><b>4</b>이유 설명</span></section>` : ''}
+        ${lessonBody}`;
+      document.querySelector('#codeText').textContent = lesson.code;
+      document.querySelector('#copyCode').addEventListener('click', () => copyText(lesson.code));
+      mountSimulator(lesson.sim);
+      renderQuiz(questions.find(question => question.id === lesson.question), document.querySelector('#quickQuiz'), true);
+      renderNav();
+      updateChrome();
+    }
+
+    function simulatorShell(controls) {
+      const simulator = document.querySelector('#simulator');
+      simulator.innerHTML = `<div class="sim-toolbar">${controls}<button type="button" class="run-btn" id="runCell">▶ 실행</button></div><div class="sim-output" id="simOutput" aria-live="polite"><div class="empty-state">실행하기 전에 결과를 먼저 예상하세요.<br>그다음 실행 버튼으로 확인합니다.</div></div>`;
+      document.querySelector('#runCell').addEventListener('click', () => {
+        if (state.runAction) state.runAction();
+      });
+    }
+
+    function mountSimulator(type) {
+      state.runAction = null;
+      if (type === 'intro') mountIntro();
+      if (type === 'array') mountArray();
+      if (type === 'zones') mountZones();
+      if (type === 'series') mountSeries();
+      if (type === 'select') mountSelect();
+      if (type === 'filter') mountFilter();
+      if (type === 'sort') mountSort();
+      if (type === 'tablework') mountTablework();
+      if (type === 'missing') mountMissing();
+      if (type === 'line') mountLine();
+      if (type === 'charts') mountCharts();
+      if (type === 'final') mountFinal();
+    }
+
+    function mountIntro() {
+      simulatorShell(`<div class="control"><span class="label">방송 단계</span><select id="library"><option value="numpy">Numpy</option><option value="pandas">Pandas</option><option value="matplotlib">Matplotlib</option></select></div>`);
+      state.runAction = () => {
+        const value = document.querySelector('#library').value;
+        const info = {
+          numpy:['현장 숫자 빠르게 계산','대기 시간 열 개 → 합계 325분','계산 결과를 다음 표 단계로 보냅니다.'],
+          pandas:['부스 상황판에서 찾기','축제부스표 → 조건에 맞는 부스만 선택','정리한 표를 그래프로 보냅니다.'],
+          matplotlib:['숫자를 방송 화면으로 번역','부스별 판매 개수 → 막대 높이','그래프에서 사실과 한계를 읽습니다.']
+        }[value];
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>도구</span><strong>${value}</strong></div><div class="metric"><span>핵심 역할</span><strong>${info[0]}</strong></div><div class="metric"><span>다음 단계</span><strong>연결</strong></div></div><p>${info[1]}</p><p class="caption">${info[2]}</p>`;
+      };
+    }
+
+    function mountArray() {
+      simulatorShell(`<div class="control"><label for="arrayRows">행 수</label><select id="arrayRows"><option value="1">1행 10열</option><option value="2" selected>2행 5열</option><option value="5">5행 2열</option><option value="10">10행 1열</option></select></div>`);
+      state.runAction = () => {
+        const rows = Number(document.querySelector('#arrayRows').value);
+        const columns = 10 / rows;
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>모양</span><strong>${rows} × ${columns}</strong></div><div class="metric"><span>기록 수</span><strong>10개</strong></div><div class="metric"><span>전체 합</span><strong>325분</strong></div></div><div class="array-grid" style="grid-template-columns:repeat(${columns},minmax(36px,1fr))">${Array.from({length:10},(_,index) => `<div class="array-cell" style="animation-delay:${index * 25}ms">${10 + index * 5}</div>`).join('')}</div><p class="caption">모양이 바뀌어도 10분부터 55분까지의 기록과 전체 합 325분은 그대로입니다.</p>`;
+      };
+    }
+
+    function mountZones() {
+      const values = Object.entries(구역방문객).map(([구역, 방문객수]) => [구역, ...방문객수]);
+      simulatorShell(`<div class="control" style="flex:1"><span class="label">세 번의 방문객 기록을 바꿔 보고 다시 실행</span><div class="score-inputs"><strong>구역</strong><strong>취재1</strong><strong>취재2</strong><strong>취재3</strong>${values.map(row => `<strong>${row[0]}</strong>${row.slice(1).map((value,index) => `<input type="number" min="0" max="300" value="${value}" data-zone="${row[0]}" data-index="${index}" aria-label="${row[0]} 구역 ${index + 1}차 방문객 수">`).join('')}`).join('')}</div></div>`);
+      state.runAction = () => {
+        const rows = Object.keys(구역방문객).map(zone => {
+          const visitors = [...document.querySelectorAll(`[data-zone="${zone}"]`)].map(input => Number(input.value));
+          return {구역:zone, 합계:sum(visitors), 평균:mean(visitors).toFixed(2)};
+        });
+        const top = [...rows].sort((a,b) => b.합계 - a.합계)[0];
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row">${rows.map(row => `<div class="metric"><span>${row.구역} 평균</span><strong>${row.평균}명</strong></div>`).join('')}</div>${tableHtml(rows,['구역','합계','평균'])}<p class="caption">세 번의 기록 안에서는 ${top.구역} 구역의 합계가 ${top.합계}명으로 가장 큽니다.</p>`;
+      };
+    }
+
+    function mountSeries() {
+      simulatorShell(`<div class="control"><label for="seriesMode">찾는 방식</label><select id="seriesMode"><option value="loc">loc: 이름표</option><option value="iloc">iloc: 자리 번호</option></select></div><div class="control"><label for="seriesKey">찾을 값</label><select id="seriesKey"></select></div>`);
+      const mode = document.querySelector('#seriesMode');
+      const key = document.querySelector('#seriesKey');
+      function setKeys() {
+        const values = mode.value === 'loc' ? 시간대별제보수값.map(row => row.이름표) : [0,1,2,3,4];
+        key.innerHTML = values.map(value => `<option>${value}</option>`).join('');
+      }
+      mode.addEventListener('change', setKeys);
+      setKeys();
+      state.runAction = () => {
+        const labels = 시간대별제보수값.map(row => row.이름표);
+        const values = 시간대별제보수값.map(row => row.제보수);
+        const index = mode.value === 'loc' ? labels.indexOf(key.value) : Number(key.value);
+        document.querySelector('#simOutput').innerHTML = `<h4 class="output-title">${mode.value}[${mode.value === 'loc' ? `'${key.value}'` : key.value}] → ${values[index]}건</h4>${tableHtml(시간대별제보수값,['이름표','자리','제보수'],index)}<p class="caption">loc는 시간 이름표 ${labels[index]}, iloc는 자리 ${index}를 사용해 같은 제보 수 ${values[index]}건을 찾습니다.</p>`;
+      };
+    }
+
+    function mountSelect() {
+      simulatorShell(`<div class="control" style="min-width:min(360px,100%)"><label for="selectQuery">선택할 코드</label><select id="selectQuery"><option value="row">loc[2] — 미니게임 한 행</option><option value="cell">loc[3, '대기시간분'] — 한 칸</option><option value="column">loc[:, '부스이름'] — 한 열</option><option value="all">loc[:, :] — 전체</option><option value="slice">loc[:2, :'대기시간분'] — 범위</option></select></div>`);
+      state.runAction = () => {
+        const query = document.querySelector('#selectQuery').value;
+        let html = '';
+        if (query === 'row') html = tableHtml([축제부스표[2]],['인덱스','부스번호','부스이름','대기시간분','만족도']);
+        if (query === 'cell') html = `<div class="metric"><span>인덱스 3 · 대기시간분</span><strong>14분</strong></div>`;
+        if (query === 'column') html = tableHtml(축제부스표.map(row => ({부스이름:row.부스이름})),['부스이름']);
+        if (query === 'all') html = tableHtml(축제부스표,['인덱스','부스번호','부스이름','대기시간분','만족도']);
+        if (query === 'slice') html = tableHtml(축제부스표.slice(0,3).map(row => ({인덱스:row.인덱스,부스번호:row.부스번호,부스이름:row.부스이름,대기시간분:row.대기시간분})),['인덱스','부스번호','부스이름','대기시간분']);
+        document.querySelector('#simOutput').innerHTML = html;
+      };
+    }
+
+    function mountFilter() {
+      simulatorShell(`<div class="control" style="min-width:min(430px,100%)"><label for="filterPreset">조건</label><select id="filterPreset"><option value="wait">대기시간분 > 15</option><option value="rating">만족도 >= 4.5</option><option value="and">대기시간분 >= 15 & 만족도 >= 4.4</option><option value="or">대기시간분 >= 15 | 만족도 >= 4.6</option></select></div>`);
+      state.runAction = () => {
+        const preset = document.querySelector('#filterPreset').value;
+        const tests = {
+          wait:row => row.대기시간분 > 15,
+          rating:row => row.만족도 >= 4.5,
+          and:row => row.대기시간분 >= 15 && row.만족도 >= 4.4,
+          or:row => row.대기시간분 >= 15 || row.만족도 >= 4.6
+        };
+        const result = 축제부스표.filter(tests[preset]);
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>전체 부스</span><strong>5개</strong></div><div class="metric"><span>남은 부스</span><strong>${result.length}개</strong></div><div class="metric"><span>조건 연결</span><strong>${preset === 'and' ? '모두' : preset === 'or' ? '하나 이상' : '한 조건'}</strong></div></div>${tableHtml(result,['부스번호','부스이름','대기시간분','만족도'])}`;
+      };
+    }
+
+    function mountSort() {
+      simulatorShell(`<div class="control"><label for="sortMode">표 바꾸기</label><select id="sortMode"><option value="asc">대기 시간 오름차순</option><option value="desc">대기 시간 내림차순</option><option value="transpose">행과 열 바꾸기</option></select></div>`);
+      state.runAction = () => {
+        const mode = document.querySelector('#sortMode').value;
+        if (mode === 'transpose') {
+          const rows = ['부스번호','부스이름','대기시간분','만족도'].map(key => ({항목:key,먹거리:축제부스표[0][key],사진관:축제부스표[1][key],미니게임:축제부스표[2][key],음료:축제부스표[3][key],책갈피:축제부스표[4][key]}));
+          document.querySelector('#simOutput').innerHTML = tableHtml(rows,['항목','먹거리','사진관','미니게임','음료','책갈피']);
+          return;
+        }
+        const result = cloneRows(축제부스표).sort((a,b) => mode === 'asc' ? a.대기시간분 - b.대기시간분 : b.대기시간분 - a.대기시간분);
+        document.querySelector('#simOutput').innerHTML = `${tableHtml(result,['부스번호','부스이름','대기시간분','만족도'])}<p class="caption">정렬 전후로 부스의 값은 같고 보이는 행 순서만 달라집니다.</p>`;
+      };
+    }
+
+    function mountTablework() {
+      simulatorShell(`<div class="control" style="min-width:min(430px,100%)"><label for="tableOperation">표 연산</label><select id="tableOperation"><option value="base">기본 부스 방문표</option><option value="average">평균 열 추가</option><option value="total">합계 열 추가</option><option value="evening">저녁 열을 2번 위치에 삽입</option><option value="dropMini">미니게임 행 제외 · axis=0</option><option value="dropEvening">저녁 열 제외 · axis=1</option><option value="dropAfternoon">저녁과 오후 열 제외 · axis=1</option></select></div>`);
+      state.runAction = () => {
+        const operation = document.querySelector('#tableOperation').value;
+        let rows = cloneRows(기본부스방문표);
+        let columns = ['부스','오전','점심','오후'];
+        if (operation === 'average') { rows.forEach(row => row.평균 = ((row.오전 + row.점심 + row.오후) / 3).toFixed(2)); columns.push('평균'); }
+        if (operation === 'total') { rows.forEach(row => row.합계 = row.오전 + row.점심 + row.오후); columns.push('합계'); }
+        if (['evening','dropMini','dropEvening','dropAfternoon'].includes(operation)) { rows.forEach((row,index) => row.저녁 = [40,50,45,55][index]); columns = ['부스','오전','점심','저녁','오후']; }
+        if (operation === 'dropMini') rows = rows.filter(row => row.부스 !== '미니게임');
+        if (operation === 'dropEvening') columns = columns.filter(column => column !== '저녁');
+        if (operation === 'dropAfternoon') columns = columns.filter(column => !['저녁','오후'].includes(column));
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>부스 행 수</span><strong>${rows.length}</strong></div><div class="metric"><span>자료 열 수</span><strong>${columns.length - 1}</strong></div><div class="metric"><span>axis 확인</span><strong>${operation.startsWith('drop') ? (operation === 'dropMini' ? '0 · 행' : '1 · 열') : '—'}</strong></div></div>${tableHtml(rows,columns)}`;
+      };
+    }
+
+    function mountMissing() {
+      simulatorShell(`<div class="control" style="min-width:min(390px,100%)"><label for="missingMethod">빈칸 처리 방법</label><select id="missingMethod"><option value="keep">그대로 두고 취재 원인 확인</option><option value="row">미니게임 행 제외 · dropna(axis=0)</option><option value="column">점심 열 제외 · dropna(axis=1)</option><option value="text">'확인 중'으로 채우기 · 화면 표시용</option><option value="mean">나머지 부스의 점심 평균으로 채우기</option></select></div>`);
+      state.runAction = () => {
+        const method = document.querySelector('#missingMethod').value;
+        let rows = cloneRows(기본부스방문표).map(row => ({...row, 점심:row.부스 === '미니게임' ? null : row.점심}));
+        let columns = ['부스','오전','점심','오후'];
+        let note = '값을 바꾸지 않았습니다. 취재 누락인지 센서 문제인지 먼저 확인합니다.';
+        if (method === 'row') { rows = rows.filter(row => row.점심 !== null); note = '미니게임 행이 사라져 부스 수가 4개에서 3개로 줄었습니다.'; }
+        if (method === 'column') { columns = columns.filter(column => column !== '점심'); note = '점심 열 전체가 사라져 다른 부스의 정상 점심 기록도 함께 잃었습니다.'; }
+        if (method === 'text') { rows.forEach(row => { if (row.점심 === null) row.점심 = '확인 중'; }); note = '화면의 빈칸은 사라졌지만 숫자와 문자가 섞여 점심 평균 계산이 어려워집니다.'; }
+        if (method === 'mean') {
+          const average = mean(rows.filter(row => row.점심 !== null).map(row => row.점심));
+          rows.forEach(row => { if (row.점심 === null) row.점심 = average.toFixed(2); });
+          note = `나머지 부스의 점심 평균 ${average.toFixed(2)}명으로 채웠습니다. 실제 관측값이 아니라 대체값이라는 기록을 남겨야 합니다.`;
+        }
+        document.querySelector('#simOutput').innerHTML = `${tableHtml(rows,columns)}<div class="teacher-tip" style="margin-top:12px"><strong>처리 결과</strong>${note}</div>`;
+      };
+    }
+
+    function mountLine() {
+      simulatorShell(`<div class="control"><label for="lineValues">시간대별 대기 시간</label><select id="lineValues"><option value="8,15,23,12">8, 15, 23, 12분</option><option value="12,9,18,25">12, 9, 18, 25분</option></select></div>`);
+      state.runAction = () => {
+        const values = document.querySelector('#lineValues').value.split(',').map(Number);
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>자동 기록 순서</span><strong>0, 1, 2, 3</strong></div><div class="metric"><span>대기 시간</span><strong>${values.join(', ')}분</strong></div><div class="metric"><span>기록 수</span><strong>4개</strong></div></div><div class="chart-wrap"><canvas id="lessonChart" aria-label="시간대별 축제 대기 시간 꺾은선그래프"></canvas></div>`;
+        requestAnimationFrame(() => drawLine(document.querySelector('#lessonChart'), values));
+      };
+    }
+
+    function mountCharts() {
+      simulatorShell(`<div class="control"><label for="chartType">그래프 종류</label><select id="chartType"><option value="bar">막대 · 부스별 판매 개수</option><option value="scatter">산점도 · 운영 인원과 대기 시간</option><option value="mixed">혼합 · 오전 선 + 오후 막대</option><option value="box">상자그림 · 대기 시간 분포</option></select></div>`);
+      state.runAction = () => {
+        const type = document.querySelector('#chartType').value;
+        const notes = {
+          bar:'부스별 판매 개수를 비교하기 알맞습니다. 많이 팔린 원인은 이 그래프만으로 알 수 없습니다.',
+          scatter:'두 수치의 관계를 살핍니다. 점의 흐름이 보여도 인과를 바로 단정하지 않습니다.',
+          mixed:'같은 부스 축에 오전과 오후 방문객을 다른 모양으로 표시했습니다. 범례를 확인해야 합니다.',
+          box:'중앙값과 값이 모인 범위, 멀리 떨어진 값을 한눈에 봅니다.'
+        };
+        document.querySelector('#simOutput').innerHTML = `<div class="chart-wrap"><canvas id="lessonChart" aria-label="선택한 데이터 그래프"></canvas></div><p class="caption">${notes[type]}</p>`;
+        requestAnimationFrame(() => drawSelectedChart(document.querySelector('#lessonChart'), type));
+      };
+    }
+
+    function mountFinal() {
+      simulatorShell(`<div class="control"><label for="factChoice">사실</label><select id="factChoice"><option>다섯 부스 중 미니게임의 대기 시간이 가장 길다</option><option>미니게임은 언제나 운영이 가장 나쁘다</option></select></div><div class="control"><label for="evidenceChoice">근거</label><select id="evidenceChoice"><option>미니게임의 대기 시간은 25분이다</option><option>학생들이 많이 웃었다</option></select></div><div class="control"><label for="limitChoice">한계</label><select id="limitChoice"><option>한 번의 축제 기록만으로 언제나 그렇다고 일반화할 수 없다</option><option>한계는 없다</option></select></div>`);
+      state.runAction = () => {
+        const fact = document.querySelector('#factChoice').value;
+        const evidence = document.querySelector('#evidenceChoice').value;
+        const limit = document.querySelector('#limitChoice').value;
+        const sound = fact.startsWith('다섯') && evidence.startsWith('미니게임의') && limit.startsWith('한 번의');
+        const 평균대기 = mean(최종부스분석표.map(row => row.대기시간분)).toFixed(1);
+        const 평균만족 = mean(최종부스분석표.map(row => row.만족도)).toFixed(1);
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>평균 대기 시간</span><strong>${평균대기}분</strong></div><div class="metric"><span>평균 만족도</span><strong>${평균만족}점</strong></div></div><div class="feedback ${sound ? 'correct' : 'wrong'}"><h4>${sound ? '방송 가능한 분석 문장입니다.' : '근거 또는 범위를 다시 확인하세요.'}</h4><p>${escapeHtml(fact)}. 근거는 ${escapeHtml(evidence)}. 다만 ${escapeHtml(limit)}.</p>${sound ? '<p><strong>구조:</strong> 사실 + 수치 근거 + 해석 한계가 모두 들어 있습니다.</p>' : '<p>표에서 직접 확인할 수 있는 사실, 숫자로 된 근거, 자료 범위를 제한하는 한계를 골라야 합니다.</p>'}</div>`;
+      };
+    }
+
+    function setupCanvas(canvas) {
+      const rect = canvas.getBoundingClientRect();
+      const width = Math.max(320, rect.width || 640);
+      const height = 310;
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = width * ratio;
+      canvas.height = height * ratio;
+      const context = canvas.getContext('2d');
+      context.scale(ratio, ratio);
+      context.clearRect(0,0,width,height);
+      context.font = '14px NanumSquareRound, sans-serif';
+      context.lineWidth = 2;
+      return {context,width,height};
+    }
+
+    function drawAxes(context,width,height,xLabel,yLabel) {
+      context.strokeStyle = '#93a1ad';
+      context.beginPath(); context.moveTo(48,18); context.lineTo(48,height-45); context.lineTo(width-20,height-45); context.stroke();
+      context.fillStyle = '#2c3a47';
+      context.fillText(yLabel,10,18);
+      context.fillText(xLabel,width-62,height-12);
+    }
+
+    function drawLine(canvas, values) {
+      const {context,width,height} = setupCanvas(canvas);
+      drawAxes(context,width,height,'기록 순서','대기 시간');
+      const max = Math.max(...values,30);
+      const points = values.map((value,index) => ({x:65 + index * (width-105)/(values.length-1), y:height-55 - value/max*(height-95)}));
+      context.strokeStyle = '#3155c6'; context.lineWidth = 4; context.beginPath();
+      points.forEach((point,index) => index ? context.lineTo(point.x,point.y) : context.moveTo(point.x,point.y)); context.stroke();
+      points.forEach((point,index) => { context.fillStyle='#ffd447'; context.strokeStyle='#15212e'; context.lineWidth=2; context.beginPath(); context.arc(point.x,point.y,7,0,Math.PI*2); context.fill(); context.stroke(); context.fillStyle='#15212e'; context.fillText(String(index),point.x-4,height-27); context.fillText(String(values[index]),point.x-4,point.y-12); });
+    }
+
+    function drawSelectedChart(canvas,type) {
+      const {context,width,height} = setupCanvas(canvas);
+      if (type === 'bar') {
+        const labels=['먹거리','사진관','미니게임','음료'], values=[95,70,82,105];
+        drawAxes(context,width,height,'부스','판매');
+        const slot=(width-85)/labels.length;
+        values.forEach((value,index) => { const x=57+index*slot, barHeight=value/110*(height-90); context.fillStyle=['#00a7c4','#3155c6','#ffd447','#ef6253'][index]; context.fillRect(x,height-45-barHeight,Math.max(38,slot-28),barHeight); context.fillStyle='#15212e'; context.fillText(labels[index],x,height-20); context.fillText(String(value),x,height-53-barHeight); });
+      }
+      if (type === 'scatter') {
+        const xs=[2,3,1,5,4], ys=[30,18,40,10,14];
+        drawAxes(context,width,height,'운영 인원','대기 시간');
+        xs.forEach((value,index) => { const x=58+value/6*(width-92), y=height-48-ys[index]/45*(height-78); context.fillStyle='#ef6253'; context.strokeStyle='#15212e'; context.beginPath(); context.arc(x,y,8,0,Math.PI*2); context.fill(); context.stroke(); context.fillStyle='#15212e'; context.fillText(`(${value},${ys[index]})`,x+8,y-8); });
+      }
+      if (type === 'mixed') {
+        const labels=['먹거리','사진관','미니게임','음료','책갈피'], morning=[42,28,35,31,24], afternoon=[58,40,52,49,36];
+        drawAxes(context,width,height,'부스','방문객');
+        const slot=(width-84)/labels.length;
+        afternoon.forEach((value,index) => { const x=55+index*slot, h=value/65*(height-88); context.fillStyle='rgba(0,167,196,.65)'; context.fillRect(x,height-45-h,Math.max(28,slot-28),h); context.fillStyle='#15212e'; context.fillText(labels[index],x,height-20); });
+        context.strokeStyle='#238b57'; context.lineWidth=4; context.beginPath();
+        morning.forEach((value,index) => { const x=55+index*slot+Math.max(28,slot-28)/2, y=height-45-value/65*(height-88); index ? context.lineTo(x,y) : context.moveTo(x,y); }); context.stroke();
+        context.fillStyle='#238b57'; context.fillText('오전 선',60,22); context.fillStyle='#007f95'; context.fillText('오후 막대',130,22);
+      }
+      if (type === 'box') {
+        const values=[8,12,18,25,7,14,9,21,16,11].sort((a,b)=>a-b);
+        const min=values[0], q1=9.5, median=13, q3=17.5, max=values[values.length-1];
+        const scale=value => 55+(value-5)/22*(width-100);
+        context.strokeStyle='#15212e'; context.lineWidth=3; const y=145;
+        context.beginPath(); context.moveTo(scale(min),y); context.lineTo(scale(max),y); context.stroke();
+        context.fillStyle='rgba(0,167,196,.35)'; context.fillRect(scale(q1),y-45,scale(q3)-scale(q1),90); context.strokeRect(scale(q1),y-45,scale(q3)-scale(q1),90);
+        [min,median,max].forEach(value => { context.beginPath(); context.moveTo(scale(value),y-48); context.lineTo(scale(value),y+48); context.stroke(); context.fillStyle='#15212e'; context.fillText(String(value),scale(value)-9,y+72); });
+        context.fillText('최솟값',scale(min)-20,62); context.fillText('중앙값',scale(median)-22,62); context.fillText('최댓값',scale(max)-20,62);
+      }
+    }
+
+    function renderQuiz(question, container, compact) {
+      if (!question) return;
+      const saved = answersForCurrentMode()[question.id];
+      container.innerHTML = `<div class="quiz-card"><span class="difficulty ${levelClass(question.level)}">${question.level}</span><h4 class="quiz-question">${escapeHtml(question.prompt)}</h4><div class="choices">${question.choices.map((choice,index) => `<label class="choice"><input type="radio" name="quiz-${question.id}" value="${index}" ${saved && saved.selected === index ? 'checked' : ''}><span><strong>${String.fromCharCode(65+index)}.</strong> ${escapeHtml(choice[0])}</span></label>`).join('')}</div><div class="quiz-actions"><button type="button" class="primary-btn" data-check="${question.id}">정답 확인</button>${state.mode === '수업' ? `<button type="button" class="secondary-btn" data-reveal="${question.id}">교사용 해설</button>` : ''}</div><div id="feedback-${question.id}"></div></div>`;
+      container.querySelector(`[data-check="${question.id}"]`).addEventListener('click', () => checkQuiz(question, container, compact));
+      const reveal = container.querySelector(`[data-reveal="${question.id}"]`);
+      if (reveal) reveal.addEventListener('click', () => showFeedback(question, question.answer, container, true));
+      if (saved) showFeedback(question, saved.selected, container, false);
+    }
+
+    function checkQuiz(question, container, compact) {
+      const selected = container.querySelector(`input[name="quiz-${question.id}"]:checked`);
+      if (!selected) { announce('답을 하나 고른 뒤 확인해 주세요.'); return; }
+      const selectedIndex = Number(selected.value);
+      answersForCurrentMode()[question.id] = {selected:selectedIndex, correct:selectedIndex === question.answer};
+      showFeedback(question, selectedIndex, container, false);
+      if (!compact && state.mode === '평가') {
+        const correctCount = questions.filter(item => state.assessmentAnswers[item.id]?.correct).length;
+        const answeredCount = questions.filter(item => state.assessmentAnswers[item.id]).length;
+        const score = document.querySelector('.score-big');
+        const responseCount = document.querySelector('#responseCount');
+        if (score) score.textContent = `${correctCount} / ${questions.length}`;
+        if (responseCount) responseCount.textContent = `응답 ${answeredCount}문항`;
+        updateChrome();
+      }
+    }
+
+    function showFeedback(question, selectedIndex, container, teacherReveal) {
+      const correct = selectedIndex === question.answer;
+      const feedback = container.querySelector(`#feedback-${question.id}`);
+      if (!feedback) return;
+      feedback.innerHTML = `<div class="feedback ${correct ? 'correct' : 'wrong'}"><h4>${teacherReveal ? '교사용 모범 해설' : correct ? '정답입니다.' : '선택을 다시 짚어 봅시다.'}</h4><p><strong>선택한 답:</strong> ${String.fromCharCode(65+selectedIndex)}. ${escapeHtml(question.choices[selectedIndex][0])}</p><p>${escapeHtml(question.choices[selectedIndex][1])}</p><ol class="solution-steps">${question.steps.map(step => `<li>${escapeHtml(step)}</li>`).join('')}</ol><div class="daily-example"><strong>생활 속 예시로 다시 보기</strong>${escapeHtml(question.daily)}</div><p><strong>모범 답안:</strong> ${escapeHtml(question.model)}</p><div class="choice-review">${question.choices.map((choice,index) => `<div class="review-row ${index === question.answer ? 'answer' : ''}"><strong>${String.fromCharCode(65+index)}. ${index === question.answer ? '정답' : '오답'}</strong> — ${escapeHtml(choice[1])}</div>`).join('')}</div></div>`;
+      feedback.scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+
+    function renderAssessment() {
+      const answered = Object.keys(state.assessmentAnswers).filter(id => questions.some(question => question.id === id));
+      const correctCount = questions.filter(question => state.assessmentAnswers[question.id]?.correct).length;
+      const question = questions[state.assessmentIndex];
+      content.innerHTML = `<section class="assessment-shell"><div class="assessment-main"><span class="eyebrow">총괄 점검 · 쉬움 4 + 중간 4 + 어려움 4</span><h2>데이터 방송국 자격 평가</h2><p class="assessment-sub">답을 고르면 풀이 과정과 모든 선택지의 오답 이유가 열립니다. 점수보다 어떤 생각에서 틀렸는지 확인하는 것이 목표입니다.</p><div class="assessment-panel" id="assessmentQuestion"></div></div><aside class="assessment-side"><div><span>현재 점수</span><strong class="score-big">${correctCount} / 12</strong><small id="responseCount">응답 ${answered.length}문항</small></div><div class="question-map">${questions.map((item,index) => `<button type="button" class="question-dot ${index === state.assessmentIndex ? 'active' : ''} ${state.assessmentAnswers[item.id] ? 'done' : ''}" data-question="${index}" aria-label="${index + 1}번 문제">${index + 1}</button>`).join('')}</div><button type="button" class="secondary-btn" id="finishAssessment">평가 결과 보기</button><button type="button" class="secondary-btn" id="resetAssessment">응답 초기화</button></aside></section>`;
+      const panel = document.querySelector('#assessmentQuestion');
+      if (state.assessmentFinished) {
+        const percent = Math.round(correctCount / questions.length * 100);
+        const message = percent >= 85 ? '개념·코드·해석을 안정적으로 연결했습니다.' : percent >= 60 ? '핵심은 잡았습니다. 틀린 문항의 오답 이유를 다시 읽어 보세요.' : '쉬움 문제부터 코드 결과를 손으로 따라가며 다시 연결해 봅시다.';
+        panel.innerHTML = `<div class="summary-box"><h3>평가 결과: ${correctCount} / ${questions.length} (${percent}점)</h3><p>${message}</p><p><strong>완성 기준:</strong> 변수 뜻 설명, loc/iloc·조건식 사용, 결측치 판단, 그래프 선택, 사실·근거·한계가 모두 연결되어야 합니다.</p><button type="button" class="primary-btn" id="reviewWrong">틀린 문제부터 복습</button></div>`;
+        document.querySelector('#reviewWrong').addEventListener('click', () => {
+          const firstWrong = questions.findIndex(item => !state.assessmentAnswers[item.id]?.correct);
+          state.assessmentFinished = false;
+          state.assessmentIndex = firstWrong < 0 ? 0 : firstWrong;
+          renderLesson();
+        });
+      } else {
+        renderQuiz(question,panel,false);
+        const next = document.createElement('button');
+        next.type='button'; next.className='secondary-btn'; next.style.marginTop='12px';
+        next.textContent = state.assessmentIndex === questions.length - 1 ? '결과 보기' : '다음 문제 →';
+        next.addEventListener('click', () => {
+          if (state.assessmentIndex === questions.length - 1) state.assessmentFinished = true;
+          else state.assessmentIndex += 1;
+          renderLesson();
+        });
+        panel.appendChild(next);
+      }
+      document.querySelectorAll('[data-question]').forEach(button => button.addEventListener('click', () => { state.assessmentFinished=false; state.assessmentIndex=Number(button.dataset.question); renderLesson(); }));
+      document.querySelector('#finishAssessment').addEventListener('click', () => { state.assessmentFinished=true; renderLesson(); });
+      document.querySelector('#resetAssessment').addEventListener('click', () => { state.assessmentAnswers={}; state.assessmentIndex=0; state.assessmentFinished=false; renderLesson(); });
+      renderNav();
+    }
+
+    function updateChrome() {
+      const progress = state.mode === '평가' ? ((state.assessmentIndex + 1) / questions.length) * 100 : ((state.lesson + 1) / lessons.length) * 100;
+      document.querySelector('#progressFill').style.width = `${progress}%`;
+      document.querySelector('#stepStatus').textContent = state.mode === '평가' ? `평가 ${state.assessmentIndex + 1} / ${questions.length}` : `${state.lesson + 1} / ${lessons.length}`;
+      document.querySelector('#prevLesson').disabled = state.mode === '평가' ? state.assessmentIndex === 0 : state.lesson === 0;
+      document.querySelector('#nextLesson').disabled = state.mode === '평가' ? state.assessmentIndex === questions.length - 1 : state.lesson === lessons.length - 1;
+      document.querySelectorAll('[data-mode]').forEach(button => {
+        const isActive = button.dataset.mode === state.mode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+    }
+
+    function goLesson(index) {
+      state.lesson = Math.max(0,Math.min(lessons.length-1,index));
+      if (state.mode === '평가') state.mode = '수업';
+      renderLesson();
+      content.focus({preventScroll:true});
+      window.scrollTo({top:0,behavior:'smooth'});
+    }
+
+    async function copyText(text) {
+      try { await navigator.clipboard.writeText(text); announce('코드를 클립보드에 복사했습니다.'); }
+      catch { announce('브라우저에서 복사가 제한되었습니다. 코드 영역을 선택해 주세요.'); }
+    }
+
+    document.querySelectorAll('[data-mode]').forEach(button => button.addEventListener('click', () => {
+      state.mode = button.dataset.mode;
+      state.assessmentFinished = false;
+      renderLesson();
+      announce(state.mode === '연습' ? '연습 모드: 예상하고 실행한 뒤 문제를 풉니다.' : state.mode === '평가' ? '평가 모드: 12문항을 차례로 풉니다.' : '수업 모드: 개념과 교사용 진행 포인트를 함께 봅니다.');
+      content.focus({preventScroll:true});
+      window.scrollTo({top:0, behavior:'smooth'});
+    }));
+    document.querySelector('#prevLesson').addEventListener('click', () => {
+      if (state.mode === '평가') { state.assessmentIndex=Math.max(0,state.assessmentIndex-1); renderLesson(); }
+      else goLesson(state.lesson-1);
+    });
+    document.querySelector('#nextLesson').addEventListener('click', () => {
+      if (state.mode === '평가') { state.assessmentIndex=Math.min(questions.length-1,state.assessmentIndex+1); renderLesson(); }
+      else goLesson(state.lesson+1);
+    });
+    document.querySelector('#fontDown').addEventListener('click', () => { state.fontSize=Math.max(14,state.fontSize-1); document.documentElement.style.setProperty('--base-size',`${state.fontSize}px`); announce(`글자 크기 ${state.fontSize}`); });
+    document.querySelector('#fontUp').addEventListener('click', () => { state.fontSize=Math.min(22,state.fontSize+1); document.documentElement.style.setProperty('--base-size',`${state.fontSize}px`); announce(`글자 크기 ${state.fontSize}`); });
+    document.querySelector('#fullscreen').addEventListener('click', async () => {
+      try {
+        if (!document.fullscreenElement && document.documentElement.requestFullscreen) await document.documentElement.requestFullscreen();
+        else if (document.fullscreenElement && document.exitFullscreen) await document.exitFullscreen();
+        else announce('이 브라우저에서는 전체 화면을 지원하지 않습니다.');
+      } catch {
+        announce('전체 화면이 제한되었습니다. 브라우저 메뉴의 전체 화면을 이용해 주세요.');
+      }
+    });
+    document.addEventListener('fullscreenchange', () => {
+      const button = document.querySelector('#fullscreen');
+      const isFullscreen = Boolean(document.fullscreenElement);
+      button.setAttribute('aria-label', isFullscreen ? '전체 화면 닫기' : '전체 화면');
+      button.title = isFullscreen ? '전체 화면 닫기' : '전체 화면';
+    });
+    window.addEventListener('resize', () => {
+      const canvas = document.querySelector('#lessonChart');
+      if (canvas && state.runAction) state.runAction();
+    });
+    document.addEventListener('keydown', event => {
+      if (event.target.matches('input, select')) return;
+      if (event.key === 'ArrowRight' && state.mode !== '평가') goLesson(state.lesson+1);
+      if (event.key === 'ArrowLeft' && state.mode !== '평가') goLesson(state.lesson-1);
+    });
+
+    renderLesson();
+  </script>
+</body>
+</html>
