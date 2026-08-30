@@ -251,6 +251,54 @@
       font-weight: 900;
       transform: rotate(2deg);
     }
+    .story-rail {
+      display: grid;
+      grid-template-columns: minmax(150px, .7fr) repeat(3, minmax(0, 1fr));
+      background: var(--white);
+      border-right: 2px solid var(--ink);
+      border-bottom: 2px solid var(--ink);
+      border-left: 2px solid var(--ink);
+    }
+    .story-phase {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 5px;
+      min-width: 0;
+      padding: 15px 18px;
+      color: var(--white);
+      background: var(--ink);
+    }
+    .story-phase span {
+      color: var(--yellow);
+      font-size: .72rem;
+      font-weight: 900;
+    }
+    .story-phase strong { font-size: .98rem; line-height: 1.35; }
+    .story-beat {
+      min-width: 0;
+      padding: 14px 16px;
+      border-left: 1px solid var(--line);
+      line-height: 1.55;
+    }
+    .story-beat strong {
+      display: block;
+      margin-bottom: 5px;
+      color: var(--blue);
+      font-size: .76rem;
+    }
+    .story-beat span { display: block; font-size: .88rem; }
+    .story-beat.mission {
+      background: #fff8d7;
+      box-shadow: inset 0 4px 0 var(--yellow);
+    }
+    .story-beat.next { background: #edf8f3; }
+    .practice-mode .story-rail {
+      border-right-color: var(--blue);
+      border-bottom-color: var(--blue);
+      border-left-color: var(--blue);
+    }
+    .practice-mode .story-phase { background: var(--blue); }
     .practice-brief {
       display: grid;
       grid-template-columns: auto repeat(4, minmax(0, 1fr));
@@ -574,6 +622,9 @@
       .lesson-btn { flex: 0 0 160px; border: 1px solid var(--line); border-radius: 6px; }
       .stage-head { grid-template-columns: 1fr; }
       .stage-badge { justify-self: start; }
+      .story-rail { grid-template-columns: 1fr; }
+      .story-phase { padding: 12px 16px; }
+      .story-beat { padding: 12px 16px; border-top: 1px solid var(--line); border-left: 0; }
       .practice-brief { grid-template-columns: repeat(4, minmax(0, 1fr)); }
       .practice-brief > strong { grid-column: 1 / -1; }
       .bottom-nav { grid-template-columns: minmax(82px, 1fr) auto minmax(82px, 1fr); }
@@ -592,6 +643,7 @@
       .stage-head h2 { font-size: 1.45rem; line-height: 1.24; }
       .stage-head p { font-size: .94rem; line-height: 1.72; }
       .stage-badge { min-width: 0; padding: 8px 11px; }
+      .story-beat span { font-size: .91rem; line-height: 1.65; }
       .practice-brief { grid-template-columns: 1fr 1fr; padding: 12px 16px; }
       .practice-brief > strong { grid-column: 1 / -1; }
       .band { padding: 16px; }
@@ -650,8 +702,8 @@
     <div class="layout">
       <aside class="sidebar" aria-label="전체 수업 목차">
         <div class="story-card">
-          <strong>오늘의 방송 원칙</strong>
-          <p>소문보다 숫자, 숫자보다 해석. 마지막에는 반드시 “어디까지 말할 수 있는가”를 덧붙입니다.</p>
+          <strong>오늘의 생방송 사건</strong>
+          <p>축제 종료 방송 전, “어디가 붐비고 어디를 도와야 할까?”에 숫자로 답합니다. 모든 단계의 단서를 모아 마지막 보도문을 완성합니다.</p>
         </div>
         <nav class="lesson-nav" id="lessonNav"></nav>
       </aside>
@@ -698,6 +750,10 @@
     const lessons = [
       {
         chapter:'준비', title:'데이터 방송국 문을 열다', badge:'개념 지도', sim:'intro', question:'q1',
+        act:1, phase:'1막 · 현장 자료 입수', phaseRange:'STEP 01-04',
+        clue:'운영 본부의 긴급 질문이 도착했습니다. 어디가 붐비고 어디를 도와야 할까요?',
+        mission:'NumPy·Pandas·Matplotlib의 역할을 나누어 취재 순서를 정합니다.',
+        next:'먼저 흩어진 대기 시간 메모 10장을 정돈해야 합니다.',
         story:'축제 시작 30분 전, 운영 본부에서 “어디가 붐비고 어디를 도와야 할까?”라는 긴급 질문이 왔습니다. 우리는 대기 시간과 방문객 기록을 계산하고, 표로 찾고, 그래프로 보여 주는 데이터 방송국 기자가 됩니다.',
         concept:'Colab은 웹에서 파이썬 코드를 칸별로 실행하는 노트입니다. 이 수업에서는 세 도구가 서로 이어져 하나의 분석을 완성합니다.',
         example:'NumPy는 현장에서 들어온 숫자를 빠르게 더하는 계산기, Pandas는 부스 이름과 대기 시간을 정리한 상황판, Matplotlib은 복잡한 숫자를 한눈에 보여 주는 방송 화면입니다.',
@@ -707,7 +763,11 @@
       },
       {
         chapter:'Numpy', title:'대기 시간 열 개를 오전·점심 두 줄로 정리하다', badge:'쉬움', sim:'array', question:'q2',
-        story:'방송부는 축제 부스 다섯 곳의 줄 서는 시간을 오전과 점심에 한 번씩 확인했습니다. 오전 기록 5개와 점심 기록 5개를 합치면 모두 10개입니다. 연습하기 쉽게 10분부터 55분까지 5분씩 늘어나는 값으로 만들었습니다. 오전 기록은 윗줄, 점심 기록은 아랫줄에 5개씩 놓으면 어느 때 줄이 더 길었는지 비교하기 쉽습니다.',
+        act:1, phase:'1막 · 현장 자료 입수', phaseRange:'STEP 01-04',
+        clue:'오전·점심에 확인한 대기 시간 메모가 10장 도착했습니다.',
+        mission:'10개 기록을 2행 5열로 놓아 비교할 수 있는 모양으로 만듭니다.',
+        next:'모양을 갖췄으니 어느 구역에 사람이 몰렸는지 합계와 평균을 계산합니다.',
+        story:'첫 번째 현장 자료가 도착했습니다. 방송부가 부스 다섯 곳의 줄 서는 시간을 오전과 점심에 한 번씩 확인해 메모 10장을 보냈습니다. 연습용으로 10분부터 55분까지 5분씩 늘어나는 값을 만들고, 오전은 윗줄, 점심은 아랫줄에 놓아 비교할 준비를 합니다.',
         concept:'같은 종류의 숫자를 순서대로 모은 것을 배열이라고 합니다. arange는 10, 15, 20처럼 일정하게 늘어나는 수를 만들고, reshape는 숫자를 바꾸지 않고 놓는 줄과 칸만 바꿉니다. 오전 한 줄과 점심 한 줄에 5개씩 놓은 모양을 2행 5열이라고 합니다.',
         example:'대기 시간이 적힌 메모 열 장을 오전 줄에 5장, 점심 줄에 5장 놓아도 메모에 적힌 시간은 그대로입니다. reshape는 메모 내용을 고치는 것이 아니라 책상 위에 놓는 줄만 바꾸는 것과 같습니다.',
         keys:[['np.arange(10, 60, 5)','연습용 대기 시간을 10분부터 5분씩 늘려 10개 만들기'],['reshape(2, 5)','오전 윗줄과 점심 아랫줄에 5개씩 놓기'],['np.sum(대기시간표)','기록된 대기 시간을 모두 더하기']],
@@ -716,7 +776,11 @@
       },
       {
         chapter:'Numpy', title:'어느 축제 구역에 사람이 가장 많이 왔을까', badge:'쉬움 → 중간', sim:'zones', question:'q9',
-        story:'먹거리·체험·공연 구역을 세 번씩 취재했습니다. 구역마다 방문객 합계와 평균을 계산해 지원 인력이 가장 필요한 곳을 찾습니다.',
+        act:1, phase:'1막 · 현장 자료 입수', phaseRange:'STEP 01-04',
+        clue:'먹거리·체험·공연 구역을 같은 횟수인 세 번씩 확인한 기록이 모였습니다.',
+        mission:'합계와 평균으로 가장 붐빈 구역을 찾고 관찰 범위를 함께 말합니다.',
+        next:'구역별 계산만으로는 언제 소식이 몰렸는지 모르므로 시간 이름표가 필요합니다.',
+        story:'대기 시간 메모를 두 줄로 정리하자 운영 본부가 다음 질문을 보냈습니다. “어느 구역에 안내 인력을 먼저 보낼까요?” 먹거리·체험·공연 구역을 세 번씩 확인한 방문객 수를 더하고 평균 내어, 같은 관찰 횟수 안에서 가장 붐빈 구역을 찾습니다.',
         concept:'뜻이 보이는 변수명은 코드 자체가 설명이 됩니다. 학생 수가 과목마다 같다면 총점과 평균의 크기 순서도 같습니다.',
         example:'세 개의 같은 크기 컵에 음료를 나누어 담는다면 전체 양이 많은 묶음은 컵 한 개당 평균도 큽니다. 세 구역의 관찰 횟수가 모두 세 번이라 합계 순위와 평균 순위가 같습니다.',
         keys:[['먹거리구역방문객','먹거리 구역의 세 번 기록'],['먹거리방문객합계','np.sum으로 구한 전체 방문객'],['먹거리방문객평균','np.mean으로 평균을 구하고, 출력할 때 round로 소수점 이하 2자리까지 표시'],['가장큰방문객합계','세 구역 합계 중 최댓값']],
@@ -725,7 +789,11 @@
       },
       {
         chapter:'Pandas', title:'Series의 이름표와 자리 번호', badge:'쉬움', sim:'series', question:'q3',
-        story:'학생들이 축제에서 본 일을 방송부에 알려 준 소식을 “제보”라고 합니다. 제보 수는 시간대마다 들어온 축제 소식의 개수입니다. 이 수를 보면 언제 소식이 몰렸는지 알 수 있어 방송부가 바쁜 시간의 소식을 먼저 정리할 수 있습니다. 점심에 들어온 35건은 “점심”이라는 이름표로도, 0부터 세어 세 번째인 2번 자리로도 찾습니다.',
+        act:1, phase:'1막 · 현장 자료 입수', phaseRange:'STEP 01-04',
+        clue:'점심에 축제 소식이 35건 몰렸지만 숫자만 보면 어느 시간의 값인지 알기 어렵습니다.',
+        mission:'Series에 시간 이름표를 붙여 점심 기록을 이름과 자리로 찾습니다.',
+        next:'이제 부스마다 여러 항목을 함께 볼 수 있는 상황판을 만듭니다.',
+        story:'구역별 혼잡을 계산한 뒤, 학생들이 현장에서 본 일을 알려 준 축제 소식이 시간대별 숫자로 도착했습니다. 언제 소식이 몰렸는지 알아야 바쁜 시간의 내용을 먼저 정리할 수 있습니다. 점심의 35건을 “점심” 이름표와 0부터 세는 2번 자리로 각각 찾아봅니다.',
         concept:'Series는 이름표마다 값 하나를 짝지어 놓은 한 줄 자료입니다. 요일별 걸음 수, 과목별 점수처럼 각 이름표에 기록할 값이 한 가지일 때 사용합니다. 처음의 NumPy 배열에는 12, 20, 35 같은 숫자만 있어서 35가 어느 시간의 값인지 바로 알기 어렵습니다. 여기서는 시간대마다 기록할 값이 “축제 소식 수” 하나뿐이므로 Series로 바꾸고 1교시, 점심 같은 이름표를 붙였습니다. 이제 “점심의 소식 수”를 이름표로 바로 찾을 수 있습니다. 한 부스에 번호, 이름, 대기 시간처럼 여러 값을 함께 기록할 때는 다음 단계의 DataFrame이 알맞습니다. loc는 label location(이름표 위치), iloc는 integer location(정수 위치)의 줄임말입니다. loc는 이름표를, iloc는 0부터 시작하는 자리 번호를 사용합니다.',
         example:'급식 줄에서 “지현 학생”을 찾으면 이름표로 찾는 loc, “앞에서 세 번째 학생”을 찾으면 자리로 찾는 iloc입니다. 파이썬은 맨 앞을 0번으로 셉니다.',
         keys:[['언제 Series?','요일별 걸음 수처럼 이름표마다 기록할 값이 하나일 때'],['왜 여기서 Series?','시간대마다 축제 소식 수 한 가지만 기록하고, 시간 이름표로 찾기 위해'],['loc[\'점심\']','loc = label location: 점심 이름표로 찾기'],['iloc[2]','iloc = integer location: 0부터 세어 세 번째 자리로 찾기']],
@@ -734,7 +802,11 @@
       },
       {
         chapter:'Pandas', title:'축제 상황판에서 필요한 한 칸을 찾다', badge:'쉬움 → 중간', sim:'select', question:'q4',
-        story:'부스번호, 부스이름, 대기 시간, 만족도를 한 표에 담았습니다. 부스마다 여러 항목을 한꺼번에 비교해야 하므로 DataFrame을 사용합니다. 방송에 필요한 것은 부스 한 줄일 수도 있고, 대기 시간 한 칸일 수도 있습니다.',
+        act:2, phase:'2막 · 지원이 필요한 곳 판단', phaseRange:'STEP 05-09',
+        clue:'운영 본부가 다섯 부스의 번호·이름·대기 시간·만족도를 보냈습니다.',
+        mission:'DataFrame으로 묶고 필요한 행·열·한 칸을 정확히 찾습니다.',
+        next:'전체 표를 읽었으니 지원 기준에 맞는 부스만 골라야 합니다.',
+        story:'점심 소식 35건을 이름표로 찾자, 이번에는 운영 본부가 다섯 부스의 상세 파일을 보냈습니다. 부스마다 번호·이름·대기 시간·만족도처럼 여러 항목이 있어 DataFrame 상황판으로 묶습니다. 방송에 필요한 한 부스, 한 열, 한 칸을 정확히 찾는 장면입니다.',
         concept:'DataFrame은 행과 열이 있는 표입니다. 학생마다 여러 과목 점수를 적는 성적표처럼, 같은 종류의 대상이 여러 개 있고 대상마다 여러 항목을 함께 기록할 때 사용합니다. 행 하나는 대상 하나, 열 하나는 그 대상에서 확인할 항목 하나입니다. 여기서는 행 하나가 부스 하나이고, 열에는 부스번호·부스이름·대기 시간·만족도를 놓았습니다. 다섯 부스의 여러 항목을 한 표에서 비교하고 필요한 행·열·한 칸을 찾기 위해 DataFrame을 사용했습니다. 앞 단계의 Series는 시간대마다 소식 수 한 가지만 기록했지만, 여기서는 부스마다 네 가지를 기록한다는 차이가 있습니다. loc[행 이름표, 열 이름표]는 이름표로 찾고, iloc[행 자리, 열 자리]는 0부터 세는 위치로 찾습니다. 대괄호 안은 “행 먼저, 열 나중”으로 읽습니다. 쉼표 왼쪽은 행, 오른쪽은 열입니다. 콜론 하나(:)는 그쪽을 처음부터 끝까지 모두 고른다는 뜻이고, :2는 처음부터 이름표 2까지 고른다는 뜻입니다. loc로 범위를 고를 때는 마지막 이름표도 포함합니다.',
         example:'지금 표의 행 이름표가 0, 1, 2처럼 자리 번호와 같아서 loc[2]와 iloc[2]는 모두 미니게임 행을 찾습니다. 하지만 찾는 기준은 다릅니다. 행 이름표가 2, 5, 8인 작은 비교표에서는 loc[2]가 이름표 2인 첫째 행 먹거리를, iloc[2]가 0부터 세어 세 번째 행 미니게임을 찾아 결과도 달라집니다.',
         keys:[['언제 DataFrame?','성적표처럼 대상마다 여러 항목을 함께 기록할 때'],['왜 여기서 DataFrame?','부스마다 번호·이름·대기 시간·만족도 네 가지를 함께 비교하기 위해'],['loc[2]','2라는 행 이름표로 미니게임 찾기'],['iloc[2]','0부터 세어 세 번째 자리의 미니게임 찾기'],['이름표 [2, 5, 8]','loc[2]는 먹거리, iloc[2]는 미니게임'],['① loc[3, \'대기시간분\']','쉼표 왼쪽에서 행 이름표 3인 음료를 찾고, 오른쪽에서 대기시간분 열을 찾기 → 만나는 값은 14분'],['② loc[:, \'부스이름\']','행 자리의 콜론(:)은 모든 행이라는 뜻 → 다섯 부스의 이름만 꺼내기'],['③ loc[:2, :\'대기시간분\']','행은 처음부터 이름표 2까지, 열은 처음부터 대기시간분까지 고르기 → 끝의 2와 대기시간분도 포함']],
@@ -743,7 +815,11 @@
       },
       {
         chapter:'Pandas', title:'도움이 필요한 부스만 남기다', badge:'중간', sim:'filter', question:'q5',
-        story:'“대기 시간이 15분 이상”, “만족도가 4.4 이상”, “두 조건 모두”, “하나 이상”. 짧은 말 한마디의 차이가 방송에 남는 부스를 바꿉니다.',
+        act:2, phase:'2막 · 지원이 필요한 곳 판단', phaseRange:'STEP 05-09',
+        clue:'긴 줄과 만족도 조건을 함께 따져야 하는 부스 상황판이 준비되었습니다.',
+        mission:'조건식을 사용해 안내 방송이나 지원이 필요한 부스만 남깁니다.',
+        next:'후보가 남았지만 어느 부스를 먼저 도울지 순서를 정해야 합니다.',
+        story:'부스 상황판이 완성되자 운영 본부가 “어디를 먼저 안내하거나 도와야 할까요?”라고 물었습니다. 대기 시간과 만족도를 True·False로 판정해 조건을 통과한 부스만 남깁니다. “모두”와 “하나 이상”의 차이가 지원 후보를 바꿉니다.',
         concept:'비교식은 각 행을 True 또는 False로 판정합니다. 그 결과를 loc에 넣으면 True인 행만 남습니다. &는 모두, |는 하나 이상입니다.',
         example:'간식을 고를 때 “1만 원 이하이면서 별점 4점 이상”이면 두 조건 모두라서 &입니다. “매운맛이거나 치즈맛”이면 하나만 맞아도 되므로 |입니다.',
         keys:[['>','초과: 같은 값은 포함하지 않음'],['>=','이상: 같은 값도 포함'],['&','두 조건 모두'],['|','두 조건 중 하나 이상']],
@@ -752,7 +828,11 @@
       },
       {
         chapter:'Pandas', title:'정렬하고 행과 열을 뒤집다', badge:'중간', sim:'sort', question:'q6',
-        story:'대기 시간이 긴 부스를 맨 위로 올리면 지원할 곳이 바로 보입니다. 방송 화면이 좁을 때는 행과 열을 바꾸어 읽기 쉽게 만들 수도 있습니다.',
+        act:2, phase:'2막 · 지원이 필요한 곳 판단', phaseRange:'STEP 05-09',
+        clue:'도움 후보가 여러 곳이라 방송과 지원 순서가 아직 정해지지 않았습니다.',
+        mission:'대기 시간이 긴 순서로 정렬하고 화면에 맞게 행과 열을 바꿉니다.',
+        next:'우선순위를 정했으니 시간대별 방문 표에 필요한 계산 항목을 보강합니다.',
+        story:'조건에 맞는 후보가 여러 곳 남아 이제 지원 순서를 정해야 합니다. 대기 시간이 긴 부스를 위로 올려 먼저 말할 곳을 정하고, 방송 화면이 좁으면 행과 열을 바꾸어 읽기 쉬운 요약표를 만듭니다.',
         concept:'sort_values는 지정한 열을 기준으로 행 순서를 바꿉니다. ascending=False는 큰 값부터입니다. T는 행과 열을 서로 바꿉니다.',
         example:'음악 목록을 재생 횟수가 많은 순서로 바꾸어도 노래 자체는 바뀌지 않습니다. 정렬도 값은 그대로 두고 보이는 순서만 바꿉니다.',
         keys:[['sort_values(\'대기시간분\')','대기 시간 오름차순'],['ascending=False','긴 대기 시간부터 내림차순'],['.T','행과 열 바꾸기']],
@@ -761,7 +841,11 @@
       },
       {
         chapter:'Pandas', title:'부스 방문표에 열을 만들고 지우다', badge:'중간 → 어려움', sim:'tablework', question:'q7',
-        story:'네 부스의 오전·점심·오후 방문객 표를 만들고 평균·합계·저녁 열을 추가합니다. 방송 목적에 따라 부스 행이나 시간대 열도 제외합니다.',
+        act:2, phase:'2막 · 지원이 필요한 곳 판단', phaseRange:'STEP 05-09',
+        clue:'지원 순서를 정한 뒤 현장 기자가 오전·점심·오후 방문객 표를 보냈습니다.',
+        mission:'평균·합계·저녁 열을 더하고 방송에 필요 없는 행과 열을 제외합니다.',
+        next:'표를 손보던 중 미니게임의 점심 값이 비어 있음을 발견합니다.',
+        story:'지원 순서를 정한 뒤, 현장 기자가 네 부스의 오전·점심·오후 방문객 표를 보냈습니다. 평균과 합계를 계산하고 저녁 기록도 끼워 넣습니다. 방송 질문에 필요 없는 부스 행이나 시간대 열은 근거를 확인한 뒤 제외합니다.',
         concept:'새 열은 대괄호로 만들고 del로 지웁니다. insert는 원하는 위치에 끼웁니다. drop의 axis=0은 행, axis=1은 열입니다.',
         example:'시간표에 “저녁” 칸을 새로 끼우는 일은 열 추가입니다. 미니게임 한 줄을 빼면 행 삭제이고, 모든 부스의 저녁 칸을 빼면 열 삭제입니다.',
         keys:[['np.random.seed(2026)','모두 같은 방문객 연습표를 얻는 장치'],['평균 열','세 시간대 방문객을 더해 3으로 나눔'],['insert','원하는 위치에 저녁 열 끼우기'],['drop','부스 행 또는 시간대 열 제외']],
@@ -770,7 +854,11 @@
       },
       {
         chapter:'Pandas', title:'빈칸을 발견하고 처리 근거를 세우다', badge:'어려움', sim:'missing', question:'q11',
-        story:'미니게임 부스의 점심 방문객 수가 비어 있습니다. 지울지, 채울지 결정하기 전에 취재가 빠졌는지 기계가 멈췄는지부터 확인합니다.',
+        act:2, phase:'2막 · 지원이 필요한 곳 판단', phaseRange:'STEP 05-09',
+        clue:'미니게임의 점심 방문객 칸이 비어 있어 그대로 방송하면 오보가 될 수 있습니다.',
+        mission:'빈칸 원인을 확인하고 삭제·표시·평균 채우기 가운데 근거 있는 방법을 고릅니다.',
+        next:'정리된 숫자를 청중이 한눈에 이해할 방송 화면으로 바꿉니다.',
+        story:'방문표를 손보던 중 미니게임의 점심 방문객 칸이 비어 있음을 발견했습니다. 빈칸을 0으로 단정하면 “모름”을 “없음”으로 바꾸는 오보가 될 수 있습니다. 취재 누락인지 기기 오류인지 확인하고, 지울지 채울지 근거를 세웁니다.',
         concept:'NaN은 값이 비어 있음을 뜻합니다. dropna(axis=0)은 빈칸이 있는 행을, axis=1은 열을 지웁니다. fillna는 선택한 값으로 채웁니다.',
         example:'배달 주문표의 빈칸은 주문이 0건이라는 뜻일 수도, 아직 입력하지 않았다는 뜻일 수도 있습니다. 이유를 모르고 0으로 채우면 “모름”을 “없음”으로 바꾸는 잘못이 생깁니다.',
         keys:[['astype(\'float\')','NaN을 담을 수 있는 실수형으로 변환'],['dropna(axis=0)','빈칸이 있는 행 제외'],['dropna(axis=1)','빈칸이 있는 열 제외'],['fillna','근거 있는 값으로 채우기']],
@@ -779,7 +867,11 @@
       },
       {
         chapter:'Matplotlib', title:'시간대별 대기 시간을 선으로 잇다', badge:'쉬움', sim:'line', question:'q8',
-        story:'네 번 기록한 대기 시간 8, 15, 23, 12분을 순서대로 이으면 줄이 언제 길어졌고 짧아졌는지 흐름이 보입니다.',
+        act:3, phase:'3막 · 방송 화면과 보도 완성', phaseRange:'STEP 10-12',
+        clue:'빈칸 처리 근거까지 세워 표는 정확해졌지만 숫자의 흐름은 한눈에 보이지 않습니다.',
+        mission:'시간 순서의 값을 선으로 이어 줄이 늘고 줄어드는 순간을 보여 줍니다.',
+        next:'질문에 따라 선이 아닌 다른 그래프도 골라야 합니다.',
+        story:'빈칸 처리 근거까지 세우자 표는 정확해졌지만, 청중이 숫자의 흐름을 한눈에 보기는 어렵습니다. 네 번 기록한 대기 시간 8, 15, 23, 12분을 시간 순서대로 이어 줄이 언제 길어지고 짧아졌는지 방송 화면으로 보여 줍니다.',
         concept:'Colab에 한글 글꼴을 설치한 뒤 런타임을 다시 시작합니다. plot에 y값만 주면 x는 0, 1, 2, 3으로 자동 생성됩니다.',
         example:'사진 네 장에 이름을 붙이지 않고 순서대로 앨범에 넣으면 휴대전화가 0번부터 3번까지 자리 번호를 붙입니다. x값을 따로 주지 않으면 같은 방식으로 자동 번호가 생깁니다.',
         keys:[['fonts-nanum','Colab 한글 글꼴 패키지'],['plt.rcParams','그래프 기본 글꼴 설정'],['plt.plot','꺾은선그래프'],['plt.show','그래프 화면에 표시']],
@@ -788,7 +880,11 @@
       },
       {
         chapter:'Matplotlib', title:'막대·산점도·상자그림을 비교하다', badge:'중간 → 어려움', sim:'charts', question:'q10',
-        story:'부스별 판매량, 운영 인원과 대기 시간의 관계, 오전·오후 방문객, 대기 시간의 퍼짐을 서로 다른 그래프로 방송합니다.',
+        act:3, phase:'3막 · 방송 화면과 보도 완성', phaseRange:'STEP 10-12',
+        clue:'선그래프로 시간 흐름을 보여 주었지만 다른 질문에는 다른 화면이 필요합니다.',
+        mission:'막대·산점도·상자그림을 질문에 맞게 선택하고 과한 해석을 막습니다.',
+        next:'표와 그래프의 근거를 한 문장으로 묶어 마지막 방송을 씁니다.',
+        story:'대기 시간 흐름을 선으로 보여 주자 부장 기자가 판매량·운영 인원·방문객 질문도 알맞은 화면으로 바꾸라고 요청했습니다. 크기 비교는 막대, 두 수치의 관계는 산점도, 여러 기록의 퍼짐은 상자그림으로 보여 주고, 그래프만으로 원인을 단정하지 않습니다.',
         concept:'막대는 범주별 크기, 산점도는 두 수치의 관계, 상자그림은 분포와 멀리 떨어진 값을 봅니다. 꺾은선과 막대를 한 화면에 둘 수도 있습니다.',
         example:'메뉴별 판매량 비교는 막대그래프, 운동 시간과 심박수처럼 두 숫자의 관계는 산점도, 통학 시간의 퍼짐은 상자그림이 알맞습니다. 먼저 질문을 정하고 그래프를 고릅니다.',
         keys:[['plt.bar','부스별 판매 개수 비교'],['plt.scatter','운영 인원과 대기 시간 관계'],['plt.boxplot','대기 시간 분포 확인'],['plt.legend','오전·오후 범례 표시']],
@@ -797,7 +893,11 @@
       },
       {
         chapter:'실전', title:'사실·근거·한계로 마지막 방송을 완성하다', badge:'평가 연결', sim:'final', question:'q12',
-        story:'마지막 방송입니다. 다섯 부스의 평균 대기 시간과 만족도를 계산하고 가장 긴 줄과 만족도 최고 부스를 찾습니다. 결론은 관찰한 다섯 부스의 범위를 넘지 않습니다.',
+        act:3, phase:'3막 · 방송 화면과 보도 완성', phaseRange:'STEP 10-12',
+        clue:'모든 계산과 표, 그래프가 준비되었지만 숫자만 읽으면 방송이 완성되지 않습니다.',
+        mission:'사실·숫자 근거·조사 한계를 묶어 운영 본부의 첫 질문에 답합니다.',
+        next:'방송 완료. 다음에는 더 많은 날짜와 시간의 자료를 모아 결론의 범위를 넓힙니다.',
+        story:'모든 방송 화면이 준비되었습니다. 이제 운영 본부가 처음 보낸 “어디가 붐비고 어디를 도와야 할까?”에 답할 차례입니다. 다섯 부스의 평균과 가장 긴 줄을 확인하고, 사실·숫자 근거·조사 한계를 묶어 지나치게 단정하지 않는 마지막 방송을 완성합니다.',
         concept:'좋은 분석 문장은 보이는 사실, 숫자 근거, 해석의 한계를 모두 포함합니다. 평가에서는 코드 결과뿐 아니라 이 연결을 확인합니다.',
         example:'점심 한 번 줄이 길었다고 “이 부스는 언제나 운영이 나쁘다”고 말할 수는 없습니다. 조사한 날짜와 시간, 기다린 이유를 함께 살펴야 믿을 수 있는 결론이 됩니다.',
         keys:[['사실','표에서 직접 확인한 부스와 값'],['근거','평균 대기 14.6분 같은 숫자'],['한계','한 번의 축제 기록만으로 언제나 그렇다고 단정할 수 없음']],
@@ -973,6 +1073,12 @@
         <h3 class="band-title"><span class="band-index">${isPractice ? '2' : '4'}</span> ${isPractice ? '내 말로 풀어 보는 문제' : '바로 확인 문제'}</h3>
         <div id="quickQuiz"></div>
       </section>`;
+      const storyRail = `<section class="story-rail" aria-label="${escapeHtml(lesson.phase)} 이야기 흐름">
+        <div class="story-phase"><span>${escapeHtml(lesson.phaseRange)} · 전체 3막 중 ${lesson.act}막</span><strong>${escapeHtml(lesson.phase)}</strong></div>
+        <div class="story-beat"><strong>확보한 단서</strong><span>${escapeHtml(lesson.clue)}</span></div>
+        <div class="story-beat mission"><strong>${isPractice ? '이번 연습 임무' : '이번 취재 임무'}</strong><span>${escapeHtml(lesson.mission)}</span></div>
+        <div class="story-beat next"><strong>다음 장면으로</strong><span>${escapeHtml(lesson.next)}</span></div>
+      </section>`;
       const lessonBody = isPractice
         ? `<section class="lesson-grid practice-layout"><div class="main-column">${simulatorBand}${quizBand}</div><aside class="side-column">${codeBand}${conceptBand}</aside></section>`
         : `<section class="lesson-grid"><div class="main-column">${conceptBand}${codeBand}${simulatorBand}</div><aside class="side-column"><section class="band teacher-only"><h3 class="band-title"><span class="band-index">T</span> 교사용 진행 포인트</h3><div class="teacher-tip"><strong>칠판 질문</strong>${escapeHtml(lesson.tip)}</div></section>${quizBand}</aside></section>`;
@@ -985,6 +1091,7 @@
           </div>
           <div class="stage-badge">${isPractice ? '직접 해보기' : escapeHtml(lesson.badge)}</div>
         </section>
+        ${storyRail}
         ${isPractice ? `<section class="practice-brief" aria-label="연습 순서"><strong>연습 순서</strong><span class="practice-step"><b>1</b>결과 예상</span><span class="practice-step"><b>2</b>값 바꾸기</span><span class="practice-step"><b>3</b>직접 실행</span><span class="practice-step"><b>4</b>이유 설명</span></section>` : ''}
         ${lessonBody}`;
       document.querySelector('#codeText').textContent = lesson.code;
@@ -1303,7 +1410,7 @@
       const answered = Object.keys(state.assessmentAnswers).filter(id => questions.some(question => question.id === id));
       const correctCount = questions.filter(question => state.assessmentAnswers[question.id]?.correct).length;
       const question = questions[state.assessmentIndex];
-      content.innerHTML = `<section class="assessment-shell"><div class="assessment-main"><span class="eyebrow">총괄 점검 · 쉬움 4 + 중간 4 + 어려움 4</span><h2>데이터 방송국 자격 평가</h2><p class="assessment-sub">답을 고르면 풀이 과정과 모든 선택지의 오답 이유가 열립니다. 점수보다 어떤 생각에서 틀렸는지 확인하는 것이 목표입니다.</p><div class="assessment-panel" id="assessmentQuestion"></div></div><aside class="assessment-side"><div><span>현재 점수</span><strong class="score-big">${correctCount} / 12</strong><small id="responseCount">응답 ${answered.length}문항</small></div><div class="question-map">${questions.map((item,index) => `<button type="button" class="question-dot ${index === state.assessmentIndex ? 'active' : ''} ${state.assessmentAnswers[item.id] ? 'done' : ''}" data-question="${index}" aria-label="${index + 1}번 문제">${index + 1}</button>`).join('')}</div><button type="button" class="secondary-btn" id="finishAssessment">평가 결과 보기</button><button type="button" class="secondary-btn" id="resetAssessment">응답 초기화</button></aside></section>`;
+      content.innerHTML = `<section class="assessment-shell"><div class="assessment-main"><span class="eyebrow">최종 방송 전 편집국 점검 · 쉬움 4 + 중간 4 + 어려움 4</span><h2>데이터 방송국 자격 평가</h2><p class="assessment-sub">1막의 자료 정리, 2막의 상황 판단, 3막의 그래프와 보도를 차례로 확인합니다. 답을 고르면 풀이 과정과 모든 선택지의 오답 이유가 열립니다.</p><div class="assessment-panel" id="assessmentQuestion"></div></div><aside class="assessment-side"><div><span>현재 점수</span><strong class="score-big">${correctCount} / 12</strong><small id="responseCount">응답 ${answered.length}문항</small></div><div class="question-map">${questions.map((item,index) => `<button type="button" class="question-dot ${index === state.assessmentIndex ? 'active' : ''} ${state.assessmentAnswers[item.id] ? 'done' : ''}" data-question="${index}" aria-label="${index + 1}번 문제">${index + 1}</button>`).join('')}</div><button type="button" class="secondary-btn" id="finishAssessment">평가 결과 보기</button><button type="button" class="secondary-btn" id="resetAssessment">응답 초기화</button></aside></section>`;
       const panel = document.querySelector('#assessmentQuestion');
       if (state.assessmentFinished) {
         const percent = Math.round(correctCount / questions.length * 100);
