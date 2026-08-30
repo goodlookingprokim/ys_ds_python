@@ -706,13 +706,13 @@
         tip:'첫 3분에는 이름을 외우기보다 “계산기, 상황판, 방송 화면”을 손짓으로 연결하게 합니다.'
       },
       {
-        chapter:'Numpy', title:'대기 시간 열 개를 2행 5열로 정리하다', badge:'쉬움', sim:'array', question:'q2',
-        story:'오전 취재 다섯 건과 점심 취재 다섯 건이 도착했습니다. 10분부터 55분까지 5분 간격의 대기 시간 열 개를 두 줄짜리 상황판으로 정리합니다.',
-        concept:'배열은 같은 종류의 값을 반듯하게 모은 상자입니다. arange는 연속된 수를 만들고 reshape는 원소 수를 바꾸지 않은 채 모양만 바꿉니다.',
-        example:'대기 시간 메모 열 장을 오전 줄과 점심 줄에 다섯 장씩 놓아도 메모 수와 적힌 시간의 합은 바뀌지 않습니다. reshape는 값이 아니라 놓는 모양만 바꿉니다.',
-        keys:[['np.arange(10, 60, 5)','10부터 55까지 5분 간격으로 만들기'],['reshape(2, 5)','오전·점심 두 행으로 다시 놓기'],['np.sum(대기시간표)','기록된 대기 시간을 모두 더하기']],
-        code:`import numpy as np\n\n# 오전과 점심, 두 번의 취재에서 다섯 부스씩 확인한 대기 시간\n대기시간표 = np.arange(10, 60, 5).reshape(2, 5)\nprint(대기시간표)\n\n전체대기시간분 = np.sum(대기시간표)\nprint('기록된 대기 시간의 합:', 전체대기시간분, '분')`,
-        tip:'10개 값이므로 2×5처럼 곱이 10인 모양만 가능하다는 점을 먼저 손으로 확인하게 합니다.'
+        chapter:'Numpy', title:'대기 시간 열 개를 오전·점심 두 줄로 정리하다', badge:'쉬움', sim:'array', question:'q2',
+        story:'방송부는 축제 부스 다섯 곳의 줄 서는 시간을 오전과 점심에 한 번씩 확인했습니다. 오전 기록 5개와 점심 기록 5개를 합치면 모두 10개입니다. 연습하기 쉽게 10분부터 55분까지 5분씩 늘어나는 값으로 만들었습니다. 오전 기록은 윗줄, 점심 기록은 아랫줄에 5개씩 놓으면 어느 때 줄이 더 길었는지 비교하기 쉽습니다.',
+        concept:'같은 종류의 숫자를 순서대로 모은 것을 배열이라고 합니다. arange는 10, 15, 20처럼 일정하게 늘어나는 수를 만들고, reshape는 숫자를 바꾸지 않고 놓는 줄과 칸만 바꿉니다. 오전 한 줄과 점심 한 줄에 5개씩 놓은 모양을 2행 5열이라고 합니다.',
+        example:'대기 시간이 적힌 메모 열 장을 오전 줄에 5장, 점심 줄에 5장 놓아도 메모에 적힌 시간은 그대로입니다. reshape는 메모 내용을 고치는 것이 아니라 책상 위에 놓는 줄만 바꾸는 것과 같습니다.',
+        keys:[['np.arange(10, 60, 5)','연습용 대기 시간을 10분부터 5분씩 늘려 10개 만들기'],['reshape(2, 5)','오전 윗줄과 점심 아랫줄에 5개씩 놓기'],['np.sum(대기시간표)','기록된 대기 시간을 모두 더하기']],
+        code:`import numpy as np\n\n# 부스 다섯 곳의 대기 시간을 오전과 점심에 한 번씩 확인\n대기시간표 = np.arange(10, 60, 5).reshape(2, 5)\nprint(대기시간표)\n\n전체대기시간분 = np.sum(대기시간표)\nprint('기록된 대기 시간의 합:', 전체대기시간분, '분')`,
+        tip:'“부스 5곳을 오전과 점심에 확인했으니 5×2=10개”를 먼저 손으로 세어 본 뒤, 두 줄에 5개씩 놓은 모양을 2행 5열이라고 알려 줍니다.'
       },
       {
         chapter:'Numpy', title:'어느 축제 구역에 사람이 가장 많이 왔을까', badge:'쉬움 → 중간', sim:'zones', question:'q9',
@@ -820,9 +820,9 @@
         model:'Numpy는 배열 계산, Pandas는 표 처리, Matplotlib은 시각화를 담당한다.'
       },
       {
-        id:'q2', level:'쉬움', prompt:'np.arange(10, 60, 5).reshape(2, 5)로 만든 대기시간표의 전체 합은?',
+        id:'q2', level:'쉬움', prompt:'부스 다섯 곳의 대기 시간을 오전과 점심에 확인하려고 np.arange(10, 60, 5).reshape(2, 5)로 표를 만들었습니다. 기록된 대기 시간의 전체 합은?',
         choices:[['10','원소의 개수만 센 오답입니다. 대기 시간 값 자체를 더해야 합니다.'],['55','마지막 값 하나만 고른 오답입니다.'],['325','정답입니다. 10부터 55까지 열 개를 모두 더한 값입니다.'],['650','325를 두 행이므로 다시 두 배 한 오답입니다. reshape 뒤에도 각 값은 한 번씩만 있습니다.']], answer:2,
-        steps:['arange(10, 60, 5)는 10,15,20,...,55를 만듭니다.','reshape는 이 열 개를 2행 5열로 놓을 뿐 값을 복사하지 않습니다.','(10+55)×10÷2 = 325이므로 전체 합은 325분입니다.'],
+        steps:['arange(10, 60, 5)는 10부터 시작해 60 전에 멈추므로 10, 15, 20, ..., 55를 만듭니다.','reshape는 오전 한 줄과 점심 한 줄에 5개씩 놓을 뿐, 값을 더 만들거나 없애지 않습니다.','처음 값과 마지막 값의 합은 10+55=65이고 이런 짝이 5개이므로 65×5=325분입니다.'],
         daily:'대기 시간 메모 열 장을 한 줄에서 두 줄로 옮겨도 적힌 분 수의 합은 같습니다. 책상 배치가 바뀌어도 학생 수가 늘지 않는 것과 같은 원리입니다.',
         model:'reshape는 값의 개수와 내용을 바꾸지 않으므로 대기 시간의 전체 합은 325분이다.'
       },
@@ -1033,11 +1033,11 @@
     }
 
     function mountArray() {
-      simulatorShell(`<div class="control"><label for="arrayRows">행 수</label><select id="arrayRows"><option value="1">1행 10열</option><option value="2" selected>2행 5열</option><option value="5">5행 2열</option><option value="10">10행 1열</option></select></div>`);
+      simulatorShell(`<div class="control"><label for="arrayRows">놓는 모양</label><select id="arrayRows"><option value="1">한 줄에 10개 (1행 10열)</option><option value="2" selected>두 줄에 5개씩 (2행 5열)</option><option value="5">다섯 줄에 2개씩 (5행 2열)</option><option value="10">열 줄에 1개씩 (10행 1열)</option></select></div>`);
       state.runAction = () => {
         const rows = Number(document.querySelector('#arrayRows').value);
         const columns = 10 / rows;
-        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>모양</span><strong>${rows} × ${columns}</strong></div><div class="metric"><span>기록 수</span><strong>10개</strong></div><div class="metric"><span>전체 합</span><strong>325분</strong></div></div><div class="array-grid" style="grid-template-columns:repeat(${columns},minmax(36px,1fr))">${Array.from({length:10},(_,index) => `<div class="array-cell" style="animation-delay:${index * 25}ms">${10 + index * 5}</div>`).join('')}</div><p class="caption">모양이 바뀌어도 10분부터 55분까지의 기록과 전체 합 325분은 그대로입니다.</p>`;
+        document.querySelector('#simOutput').innerHTML = `<div class="metric-row"><div class="metric"><span>놓는 모양</span><strong>${rows}줄 × ${columns}개</strong></div><div class="metric"><span>기록 수</span><strong>10개</strong></div><div class="metric"><span>전체 합</span><strong>325분</strong></div></div><div class="array-grid" style="grid-template-columns:repeat(${columns},minmax(36px,1fr))">${Array.from({length:10},(_,index) => `<div class="array-cell" style="animation-delay:${index * 25}ms">${10 + index * 5}</div>`).join('')}</div><p class="caption">컴퓨터에서는 이 모양을 ${rows}행 ${columns}열이라고 부릅니다. 놓는 모양이 바뀌어도 10개 기록과 전체 합 325분은 그대로입니다.</p>`;
       };
     }
 
